@@ -1,0 +1,47 @@
+/* ---------- CTA final ---------- */
+.final-cta {
+  padding-bottom: 0;
+  overflow: clip;
+  background:
+    radial-gradient(ellipse 58% 48% at 50% 100%, rgba(176, 140, 232, 0.34), transparent 72%),
+    var(--night);
+  text-align: center;
+}
+
+.final-cta__inner { position: relative; z-index: 1; display: grid; justify-items: center; gap: 1.25rem; }
+
+.final-cta__title {
+  max-width: 14ch;
+  font-size: clamp(2.1rem, 1.1rem + 5vw, 5rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+}
+.final-cta__text { color: var(--on-dark-2); font-size: var(--step-1); }
+.final-cta__button { margin-top: 0.75rem; }
+
+.final-cta__choices { width: min(100%, 640px); }
+.final-cta__choices-title { margin-top: 0.75rem; color: var(--on-dark-2); font-weight: 600; }
+.choice-cards { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; margin-top: 0.85rem; }
+.choice-card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1.1rem 1.3rem;
+  border: 1px solid rgba(246, 239, 211, 0.2);
+  border-radius: var(--radius);
+  background: var(--night-3);
+  color: var(--on-dark);
+  text-align: left;
+  text-decoration: none;
+  transition: border-color 0.2s ease, transform 0.25s var(--ease-out), background-color 0.2s ease;
+}
+.choice-card:hover { border-color: var(--shell); background: #34195A; transform: translateY(-2px); }
+.choice-card__who { color: var(--on-dark-2); font-size: 0.92rem; }
+.choice-card__action { color: var(--shell); font-size: 0.9rem; font-weight: 800; letter-spacing: 0.045em; text-transform: uppercase; }
+
+.final-cta__art { display: flex; justify-content: center; margin-top: clamp(1.75rem, 1rem + 3vw, 3.5rem); }
+.final-cta__image { width: min(740px, 112vw); max-width: none; margin-bottom: -1px; }
+
+@media (min-width: 560px) {
+  .choice-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

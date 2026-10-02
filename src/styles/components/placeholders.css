@@ -1,0 +1,25 @@
+/* ---------- Placeholders: informação real ainda não fornecida ----------
+   Aparecem em amarelo, entre colchetes. Somem quando o texto é trocado
+   no arquivo de conteúdo (src/content/). */
+.ph {
+  padding: 0.05em 0.4em;
+  border: 1px dashed #C49A1E;
+  border-radius: 6px;
+  background: #FFF1B8;
+  color: #574300;
+  font-family: var(--font-body);
+  font-size: 0.9em;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.section--stage .ph,
+.section--purple .ph,
+.site-footer .ph {
+  border-color: rgba(255, 214, 79, 0.65);
+  background: rgba(255, 214, 79, 0.14);
+  color: #FFE39A;
+}

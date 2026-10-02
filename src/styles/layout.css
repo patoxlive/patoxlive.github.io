@@ -1,0 +1,48 @@
+/* ---------- Estrutura ---------- */
+.container {
+  width: 100%;
+  max-width: calc(var(--container) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  position: relative;
+  padding-block: var(--space-section);
+}
+
+main > section[id],
+[data-disclosure-panel] {
+  scroll-margin-top: calc(var(--header-h) + 12px);
+}
+
+/* fundos de seção (cada um redefine a cor do foco) */
+.section--stage {
+  background: var(--night);
+  color: var(--on-dark);
+  --focus: var(--shell);
+}
+.section--purple {
+  background: var(--purple);
+  color: var(--white);
+  --focus: var(--shell);
+}
+
+.section-head {
+  max-width: 760px;
+  margin-bottom: clamp(2.25rem, 1.5rem + 3vw, 4rem);
+}
+
+.section-title {
+  font-size: var(--step-3);
+  font-weight: 700;
+}
+
+.section-lead {
+  margin-top: 1rem;
+  max-width: 56ch;
+  font-size: var(--step-1);
+  color: var(--ink-2);
+}
+.section--stage .section-lead { color: var(--on-dark-2); }
+.section--purple .section-lead { color: rgba(255, 255, 255, 0.88); }

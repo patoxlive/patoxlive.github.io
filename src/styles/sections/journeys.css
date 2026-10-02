@@ -1,0 +1,43 @@
+/* ---------- Duas jornadas ---------- */
+.journeys { padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem) clamp(3.5rem, 2.5rem + 4vw, 6rem); }
+
+.journeys__grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+
+.journey {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: clamp(1.5rem, 1rem + 2vw, 2.75rem);
+  border-radius: var(--radius-lg);
+}
+.journey--streamer { background: var(--shell); color: var(--night); }
+.journey--recruiter { background: var(--purple); color: var(--white); --focus: var(--shell); }
+
+.journey__top { display: flex; align-items: center; gap: 1rem; }
+.journey__art { display: grid; place-items: center; width: 64px; height: 68px; flex: none; }
+.journey__art .egg-mini { width: 52px; height: 65px; }
+.journey__art .egg-mini--nest { width: 64px; height: 60px; }
+.journey--recruiter .nest-bowl { stroke: #3B1570; }
+.journey__tag { font-size: 0.95rem; font-weight: 700; }
+
+.journey__title { margin-top: 0.4rem; font-size: var(--step-2); font-weight: 700; }
+.journey__text { max-width: 44ch; }
+.journey--recruiter .journey__text { color: rgba(255, 255, 255, 0.9); }
+
+.journey__next {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(29, 12, 48, 0.15);
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+.journey--recruiter .journey__next { border-top-color: rgba(255, 255, 255, 0.24); color: rgba(255, 255, 255, 0.82); }
+
+.journey__cta { margin-top: 0.5rem; }
+
+@media (min-width: 560px) {
+  .journey__cta { align-self: flex-start; }
+}
+@media (min-width: 800px) {
+  .journeys__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.5rem; }
+}

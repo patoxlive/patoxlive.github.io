@@ -1,0 +1,15 @@
+{
+  "name": "patox-live-site",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site institucional da PATOX LIVE — agência de TikTok LIVE.",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "node scripts/build.mjs",
+    "placeholders": "node scripts/build.mjs --report-only"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

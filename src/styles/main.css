@@ -1,0 +1,31 @@
+/* ============================================================
+   PATOX LIVE — ESTILOS
+   A ordem abaixo é a ordem final no CSS gerado (dist/assets/css/styles.css).
+   Cores, fontes e medidas: tokens.css
+   ============================================================ */
+@import "./tokens.css";
+@import "./base.css";
+@import "./layout.css";
+
+@import "./components/buttons.css";
+@import "./components/placeholders.css";
+@import "./components/badges.css";
+@import "./components/header.css";
+@import "./components/avatars.css";
+@import "./components/footer.css";
+
+@import "./sections/hero.css";
+@import "./sections/journeys.css";
+@import "./sections/about.css";
+@import "./sections/benefits.css";
+@import "./sections/steps.css";
+@import "./sections/live-check.css";
+@import "./sections/egg.css";
+@import "./sections/apply.css";
+@import "./components/chat-card.css";
+@import "./sections/recruit.css";
+@import "./sections/support.css";
+@import "./sections/final-cta.css";
+
+@import "./pages/secondary.css";
+@import "./animations.css";

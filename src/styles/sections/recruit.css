@@ -1,0 +1,72 @@
+/* ---------- Recrutamento ---------- */
+.recruit__inner { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem; align-items: center; }
+
+.recruit__art { position: relative; width: min(100%, 540px); margin-inline: auto; }
+/* moldura em arco: lembra a boca do ninho */
+.recruit__image {
+  width: 100%;
+  border-radius: 999px 999px var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 40px 80px -44px rgba(20, 8, 33, 0.9);
+}
+
+.recruit__facts { display: grid; margin: 2rem 0 0; }
+.recruit__fact { padding-block: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.24); }
+.recruit__fact:last-child { border-bottom: 1px solid rgba(255, 255, 255, 0.24); }
+.recruit__fact dt { font-family: var(--font-display); font-size: 1rem; font-weight: 700; }
+.recruit__fact dd { margin: 0.35rem 0 0; color: rgba(255, 255, 255, 0.9); }
+.recruit__fact .check-list { margin-top: 0.6rem; }
+
+/* Quem pode participar: streamers × recrutadores */
+.who-groups { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0.75rem; margin-top: 0.75rem; }
+.who-group {
+  display: grid;
+  align-content: start;
+  gap: 0.45rem;
+  padding: 1rem 1.15rem;
+  border-radius: var(--radius);
+  background: rgba(29, 12, 48, 0.24);
+}
+.who-group__title { color: var(--shell); font-size: 1rem; font-weight: 700; }
+.who-group__text { color: rgba(255, 255, 255, 0.92); font-size: 0.95rem; }
+.who-group__link {
+  justify-self: start;
+  margin-top: 0.25rem;
+  color: var(--shell);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1.5px;
+}
+.who-group__link:hover { color: var(--white); }
+
+@media (min-width: 600px) {
+  .who-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.recruit__cta { margin-top: 2rem; }
+
+@media (max-width: 559px) {
+  .recruit__cta { width: 100%; }
+}
+@media (min-width: 960px) {
+  .recruit__inner { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4.5rem; }
+}
+
+/* abre/fecha suave (escolha de caminho no CTA final) */
+.js .disclosure {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.5s var(--ease-out), opacity 0.35s ease, visibility 0s linear 0s;
+}
+.js .disclosure > .disclosure__inner { min-height: 0; overflow: hidden; }
+.js .disclosure.is-open > .disclosure__inner { overflow: visible; }
+.js .disclosure[data-collapsed] {
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  opacity: 0;
+  transition: grid-template-rows 0.4s var(--ease-out), opacity 0.2s ease, visibility 0s linear 0.4s;
+}
+.js .disclosure.no-transition { transition: none; }

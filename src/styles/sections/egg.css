@@ -1,0 +1,197 @@
+/* ---------- O OVO (microinteração principal) ----------
+   Estados em [data-egg-state]: idle · anticipating · cracking · hatched */
+.egg-section {
+  padding-top: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+  padding-bottom: calc(var(--space-section) + 36px);
+  overflow: clip;
+  text-align: center;
+}
+
+.egg-section__inner { display: grid; justify-items: center; gap: clamp(1.25rem, 1rem + 1vw, 2rem); }
+
+/* textos: as duas versões ocupam o mesmo lugar (sem pulo de layout) */
+.egg-copy { display: grid; justify-items: center; }
+.egg-copy__title {
+  display: grid;
+  font-size: clamp(1.9rem, 1.3rem + 2.8vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.egg-copy__texts { display: grid; margin-top: 0.9rem; }
+.egg-copy__title > *,
+.egg-copy__texts > *,
+.egg-actions > * { grid-area: 1 / 1; }
+.egg-copy__text { max-width: 42ch; color: var(--on-dark-2); font-size: var(--step-1); }
+
+[data-egg-when] {
+  transition:
+    opacity 0.55s var(--ease-out) 0.1s,
+    transform 0.55s var(--ease-out) 0.1s,
+    visibility 0s linear 0s;
+}
+.js .egg-section:not([data-egg-state="hatched"]) [data-egg-when="open"],
+.js .egg-section[data-egg-state="hatched"] [data-egg-when="closed"] {
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    visibility 0s linear 0.25s;
+}
+/* sem JavaScript: mostra o texto do ovo fechado + o botão de cadastro */
+html:not(.js) [data-egg-when="open"]:not([data-egg-nojs]) { display: none; }
+html:not(.js) .egg-hint { display: none; }
+
+/* palco */
+.egg-stage {
+  position: relative;
+  width: min(74vw, 400px);
+  aspect-ratio: 1179 / 1428;
+}
+.egg-stage__glow,
+.egg-stage__glow::after {
+  position: absolute;
+  inset: 4% -30% -6%;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: opacity 0.6s ease, transform 0.6s var(--ease-out);
+}
+.egg-stage__glow {
+  background: radial-gradient(closest-side, rgba(176, 140, 232, 0.4), rgba(176, 140, 232, 0.12) 58%, transparent 74%);
+}
+.egg-stage__glow::after {
+  content: "";
+  inset: 20% 22% 12%;
+  background: radial-gradient(closest-side, rgba(246, 239, 211, 0.35), transparent 72%);
+  opacity: 0;
+}
+.egg-stage__floor {
+  position: absolute;
+  left: 50%;
+  bottom: -1.5%;
+  width: 70%;
+  height: 7%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(5, 1, 12, 0.7), transparent);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* o botão-ovo */
+.egg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.egg:focus { outline: none; }
+.egg:focus-visible .egg__ring { opacity: 1; }
+
+.egg__body { position: absolute; inset: 0; display: block; transform-origin: 50% 97%; }
+.egg__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.egg__hatched {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transform-origin: 50% 97%;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.egg__ring {
+  fill: none;
+  stroke: var(--shell);
+  stroke-width: 10;
+  stroke-dasharray: 34 22;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.egg__piece { transform-box: fill-box; transform-origin: 50% 50%; }
+/* o ovo inteiro fica por cima das lascas até o estouro (evita "costuras" no ovo fechado) */
+.egg__pieces { visibility: hidden; }
+.egg-section[data-egg-burst] .egg__pieces { visibility: visible; }
+.egg-section[data-egg-burst] .egg__whole { visibility: hidden; }
+.egg__edge { fill: none; stroke: var(--shell-line); stroke-width: 8; stroke-linejoin: round; opacity: 0; }
+.egg__crack {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}
+.egg__flash { opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; pointer-events: none; }
+
+/* 1. parado: de vez em quando o ovo dá um "tuc-tuc" (só quando visível) */
+.egg-section.is-inview[data-egg-state="idle"] .egg__body { animation: egg-idle 5.2s ease-in-out 0.8s infinite; }
+
+/* 2. expectativa (hover / foco / chegada no celular) */
+.egg-section[data-egg-state="anticipating"] .egg__body { animation: egg-anticipate 1.5s ease-in-out infinite; }
+.egg-section[data-egg-state="anticipating"] .egg-stage__glow { transform: scale(1.08); }
+.egg-section[data-egg-state="anticipating"] .egg-stage__glow::after { opacity: 1; }
+.egg-section[data-egg-pip] .egg__crack--pip { stroke-dashoffset: 0; transition: stroke-dashoffset 0.4s ease-out; }
+
+/* 3. rachando: controlado pelo JavaScript (Web Animations) */
+.egg-section[data-egg-state="cracking"] .egg-stage__glow::after { opacity: 1; }
+
+/* 4. aberto */
+.egg-section[data-egg-state="hatched"] .egg__hatched { opacity: 1; }
+.egg-section[data-egg-state="hatched"] .egg__pieces,
+.egg-section[data-egg-state="hatched"] .egg__cracks { visibility: hidden; }
+.egg-section[data-egg-state="hatched"] .egg { cursor: default; }
+.egg-section.is-inview[data-egg-state="hatched"] .egg__hatched { animation: duck-breathe 3.4s ease-in-out 1s infinite; }
+
+/* dica e ações */
+.egg-actions { display: grid; justify-items: center; min-height: 7.75rem; }
+.egg-hint {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  align-self: start;
+  gap: 0.35rem 0.75rem;
+  padding: 0.6rem 1.15rem;
+  border: 1px solid rgba(246, 239, 211, 0.3);
+  border-radius: 999px;
+  transition: border-color 0.3s ease, background-color 0.3s ease, transform 0.3s var(--ease-out);
+}
+.egg-hint__word { color: var(--shell); font-family: var(--font-display); font-weight: 700; }
+.egg-hint__how { color: var(--on-dark-2); font-size: 0.95rem; }
+.egg-hint__how--touch { display: none; }
+@media (hover: none), (pointer: coarse) {
+  .egg-hint__how--pointer { display: none; }
+  .egg-hint__how--touch { display: inline; }
+}
+.egg-section[data-egg-state="anticipating"] .egg-hint,
+.egg-section.egg-section--nudge .egg-hint {
+  border-color: var(--shell);
+  background: rgba(246, 239, 211, 0.08);
+}
+
+.egg-actions__open { display: grid; justify-items: center; align-content: start; gap: 0.75rem; }
+.egg-actions__replay { color: var(--on-dark-2); font-size: 0.95rem; }
+.egg-actions__replay:hover { color: var(--on-dark); }
+
+/* borda de casca quebrada: o palco escuro "racha" para a seção clara do formulário */
+.crack-edge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: clamp(26px, 3vw, 44px);
+  background: var(--lilac-50);
+  clip-path: polygon(0 100%, 0 52%, 3% 30%, 6% 64%, 10% 22%, 14% 58%, 18% 34%, 22% 72%, 27% 26%, 31% 60%, 35% 38%, 40% 76%, 44% 30%, 48% 58%, 52% 16%, 56% 60%, 60% 34%, 64% 70%, 69% 24%, 73% 58%, 77% 38%, 82% 74%, 86% 28%, 90% 62%, 94% 36%, 97% 66%, 100% 42%, 100% 100%);
+  pointer-events: none;
+}

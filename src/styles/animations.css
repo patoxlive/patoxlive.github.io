@@ -1,0 +1,75 @@
+/* ============================================================
+   ANIMAÇÕES
+   A principal é a do ovo (sections/egg.css + scripts/modules/egg.js).
+   As demais são discretas. Tudo respeita "reduzir movimento".
+   ============================================================ */
+
+@keyframes live-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(233, 30, 86, 0.55); }
+  70% { box-shadow: 0 0 0 0.55em rgba(233, 30, 86, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(233, 30, 86, 0); }
+}
+@keyframes live-blink { 50% { opacity: 0.35; } }
+
+/* hero: a tampa do ovo escuro sobe quando a página abre */
+@keyframes cap-lift {
+  from { transform: translate(0, 0) rotate(0deg); }
+  to { transform: translate(14px, -48px) rotate(-11deg); }
+}
+@keyframes heart-float {
+  0% { transform: translate(0, 0) scale(0.55); opacity: 0; }
+  12% { opacity: 1; }
+  55% { transform: translate(-12px, -100px) scale(1); opacity: 0.95; }
+  100% { transform: translate(8px, -175px) scale(0.85); opacity: 0; }
+}
+@keyframes egg-dot-wobble {
+  0% { transform: rotate(0); }
+  25% { transform: rotate(-14deg); }
+  50% { transform: rotate(10deg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0); }
+}
+
+/* ovo principal */
+@keyframes egg-idle {
+  0%, 84%, 100% { transform: rotate(0); }
+  86.5% { transform: rotate(-2.6deg); }
+  89% { transform: rotate(2.2deg); }
+  91.5% { transform: rotate(-1.4deg); }
+  94% { transform: rotate(0.7deg); }
+}
+@keyframes egg-anticipate {
+  0%, 52%, 100% { transform: rotate(0) scale(1); }
+  8% { transform: rotate(-3.2deg) scale(1.01, 0.995); }
+  17% { transform: rotate(3deg) scale(1.01, 0.995); }
+  26% { transform: rotate(-2.4deg); }
+  35% { transform: rotate(1.8deg); }
+  44% { transform: rotate(-0.8deg); }
+}
+@keyframes duck-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.006, 1.012); }
+}
+@keyframes caret-blink { 50% { opacity: 0; } }
+
+/* entrada no scroll: o elemento já está visível em repouso;
+   a animação começa um pouco antes de ele entrar na tela */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: none; }
+}
+.is-revealing {
+  animation: reveal-up 0.8s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+  }
+  .hero__hearts { display: none; }
+}

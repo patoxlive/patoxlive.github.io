@@ -1,0 +1,52 @@
+/* ---------- Benefícios ---------- */
+.benefits { background: var(--lilac-100); }
+
+.benefits__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  list-style: none;
+}
+
+.benefit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.5rem;
+  border: 1px solid var(--lilac-200);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+
+/* ícone dentro de um "ovo" pastel, como os ovos da ninhada */
+.benefit__icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 54px;
+  height: 66px;
+  border-radius: 50% 50% 47% 47% / 58% 58% 42% 42%;
+  background: var(--tone, var(--nest-1));
+  color: var(--night);
+}
+.benefit__title { font-size: 1.05rem; font-weight: 700; }
+.benefit__text { color: var(--ink-2); font-size: 0.95rem; }
+.benefit__team-avatar { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--lilac-100); }
+.benefit__owner {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--lilac-200);
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .benefits__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 1100px) {
+  .benefits__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}

@@ -1,0 +1,49 @@
+/* ---------- Páginas legais e 404 ---------- */
+.legal { padding-block: clamp(2.5rem, 2rem + 3vw, 4.5rem) clamp(4rem, 3rem + 4vw, 6.5rem); }
+.legal__inner { max-width: 780px; }
+.legal__back a { color: var(--purple); font-weight: 700; }
+.legal__title { margin-top: 1.5rem; font-size: var(--step-3); font-weight: 800; }
+.legal__updated { margin-top: 0.75rem; color: var(--ink-2); font-size: 0.9rem; }
+.legal__intro { margin-top: 1.5rem; color: var(--ink-2); font-size: var(--step-1); }
+.legal a { color: var(--purple); font-weight: 600; overflow-wrap: anywhere; }
+
+.legal__list { display: grid; gap: 0.5rem; margin-top: 0.75rem; padding-left: 1.25rem; color: var(--ink-2); }
+.legal__list li::marker { color: var(--purple); }
+
+.legal__summary {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: var(--radius);
+  background: var(--shell);
+}
+.legal__summary-title { font-size: 1.05rem; font-weight: 700; }
+.legal__summary .legal__list { color: var(--ink); }
+
+.legal__toc {
+  margin-top: 2rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--lilac-200);
+  border-radius: var(--radius);
+  background: var(--white);
+}
+.legal__toc-title { font-size: 1rem; font-weight: 700; }
+.legal__toc-list { display: grid; gap: 0.35rem; margin-top: 0.75rem; padding-left: 1.4rem; }
+.legal__toc-list li::marker { color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.legal__toc-list a { font-weight: 600; text-decoration: none; }
+.legal__toc-list a:hover { text-decoration: underline; }
+
+.legal__sections { list-style: none; }
+.legal__section { margin-top: 2.5rem; scroll-margin-top: calc(var(--header-h) + 16px); }
+.legal__section h2 { font-size: 1.2rem; font-weight: 700; }
+.legal__num { color: var(--purple); }
+.legal__section > p { margin-top: 0.75rem; color: var(--ink-2); }
+
+@media (min-width: 720px) {
+  .legal__toc-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; }
+}
+
+.not-found { padding-block: clamp(4rem, 3rem + 6vw, 8rem); text-align: center; }
+.not-found__inner { display: grid; justify-items: center; gap: 1.25rem; }
+.not-found__egg .egg-mini { width: 96px; height: 120px; }
+.not-found__title { font-size: var(--step-3); font-weight: 800; }
+.not-found__text { max-width: 44ch; color: var(--ink-2); }

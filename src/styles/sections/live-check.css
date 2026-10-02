@@ -1,0 +1,48 @@
+/* ---------- Você já faz LIVE? ---------- */
+.live-check { padding-bottom: clamp(2rem, 1rem + 3vw, 4rem); }
+
+.live-check__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "title" "body" "note";
+  gap: 2rem;
+}
+.live-check__title { grid-area: title; }
+.live-check__body { grid-area: body; }
+.live-check__beginner { grid-area: note; }
+
+.live-check__title {
+  font-size: clamp(2.1rem, 1.3rem + 4vw, 4.2rem);
+  font-weight: 800;
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+}
+.live-check__badge { display: block; margin-bottom: 1.25rem; font-size: 1.1rem; line-height: 1; }
+
+.live-check__text { color: var(--on-dark-2); font-size: var(--step-1); }
+.live-check__list-title { margin-top: 1.75rem; font-weight: 700; }
+
+.check-list { display: grid; gap: 0.65rem; margin-top: 0.8rem; list-style: none; }
+.check-list li { display: flex; align-items: flex-start; gap: 0.75rem; }
+.check-list .icon { margin-top: 0.2em; color: var(--shell); }
+
+.live-check__beginner {
+  max-width: 30rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid rgba(246, 239, 211, 0.14);
+  border-radius: var(--radius);
+  background: var(--night-3);
+  color: var(--on-dark-2);
+  font-size: 0.95rem;
+}
+.live-check .btn { margin-top: 1.75rem; }
+
+@media (min-width: 960px) {
+  .live-check__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "title body" "note body";
+    gap: 2rem 4.5rem;
+    align-items: start;
+  }
+}

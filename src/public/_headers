@@ -1,0 +1,20 @@
+# PATOX LIVE — Netlify e Cloudflare Pages
+# Essas plataformas já entregam o site em HTTPS e redirecionam http:// automaticamente.
+# Este arquivo só acrescenta os cabeçalhos de segurança e de cache.
+
+/*
+  Strict-Transport-Security: max-age=31536000
+  Content-Security-Policy: upgrade-insecure-requests
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: SAMEORIGIN
+  Permissions-Policy: camera=(), microphone=(), geolocation=()
+
+/assets/css/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/js/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/assets/images/*
+  Cache-Control: public, max-age=2592000

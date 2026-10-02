@@ -1,0 +1,55 @@
+# ============================================================
+#  PATOX LIVE — servidores Apache / LiteSpeed
+#  (Hostinger, HostGator, Locaweb, KingHost, UOL Host, cPanel…)
+#
+#  IMPORTANTE: ative antes o certificado SSL no painel da
+#  hospedagem (normalmente é gratuito, "Let's Encrypt").
+#  Sem o certificado, o redirecionamento abaixo não funciona.
+# ============================================================
+
+Options -Indexes
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+AddType image/webp .webp
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1) Todo acesso por http:// vai para https:// (redirecionamento permanente)
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+  # 2) OPCIONAL: endereço único sem "www" (tire o # das duas linhas para ativar)
+  # RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  # RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+<IfModule mod_headers.c>
+  # Depois da primeira visita, o navegador só abre o site em HTTPS (1 ano)
+  Header always set Strict-Transport-Security "max-age=31536000"
+  # Se algum endereço http:// aparecer no conteúdo, o navegador troca por https://
+  Header always set Content-Security-Policy "upgrade-insecure-requests"
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+</IfModule>
+
+# Cache: CSS e JS mudam de endereço a cada build (?v=...), então podem ficar 1 ano.
+# Imagens: 30 dias (se trocar uma imagem mantendo o nome, quem já visitou vê a nova em até 30 dias).
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 0 seconds"
+  ExpiresByType text/css "access plus 1 year"
+  ExpiresByType text/javascript "access plus 1 year"
+  ExpiresByType application/javascript "access plus 1 year"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/x-icon "access plus 30 days"
+</IfModule>
+
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml text/plain application/xml
+</IfModule>

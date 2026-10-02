@@ -1,0 +1,27 @@
+/* ---------- Sobre ---------- */
+.about { padding-top: clamp(3.5rem, 2.5rem + 4vw, 6rem); }
+.about__inner { display: grid; grid-template-columns: minmax(0, 1fr); gap: 3rem; }
+
+.about__label { margin-top: 2.25rem; color: var(--purple); font-size: 0.95rem; font-weight: 700; }
+
+.about__manifesto {
+  margin-top: 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(1.35rem, 1rem + 1.5vw, 2.2rem);
+  font-weight: 600;
+  line-height: 1.28;
+  letter-spacing: -0.02em;
+}
+.about__line { display: block; }
+.about__line + .about__line { margin-top: 0.35em; }
+
+.about__facts { display: grid; margin: 0; }
+.about__fact { padding-block: 1.5rem; border-top: 1px solid var(--lilac-200); }
+.about__fact:last-child { border-bottom: 1px solid var(--lilac-200); }
+.about__fact-title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
+.about__fact-text { margin: 0.5rem 0 0; color: var(--ink-2); }
+
+@media (min-width: 960px) {
+  .about__inner { grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr); gap: 5rem; align-items: start; }
+  .about__facts { margin-top: 0.4rem; }
+}

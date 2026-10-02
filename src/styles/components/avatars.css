@@ -1,0 +1,24 @@
+/* ---------- Equipe: cada pessoa é um ovinho com a inicial ---------- */
+.egg-avatar {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 32px;
+  border-radius: 50% 50% 47% 47% / 58% 58% 42% 42%;
+  background: var(--tone, var(--nest-1));
+  box-shadow: inset 0 -3px 0 rgba(29, 12, 48, 0.08);
+  color: var(--night);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1;
+  padding-top: 0.15em;
+}
+.egg-avatar--lg { width: 44px; height: 54px; font-size: 1.1rem; }
+
+.team { display: grid; gap: 0.85rem; margin-top: 0.85rem; list-style: none; }
+.team__member { display: flex; align-items: center; gap: 0.9rem; }
+.team__text { display: grid; }
+.team__name { color: var(--ink); font-weight: 700; }
+.team__role { color: var(--ink-2); font-size: 0.92rem; }

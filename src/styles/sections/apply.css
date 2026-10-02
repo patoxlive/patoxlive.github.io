@@ -1,0 +1,51 @@
+/* ---------- Agenciamento pelo WhatsApp ----------
+   Celular: título → conversa (botão do WhatsApp) → detalhes.
+   Computador: título e detalhes à esquerda, conversa à direita. */
+.apply { padding-top: calc(var(--space-section) * 0.8); }
+
+.apply__inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "intro" "chat" "details";
+  gap: 2rem;
+}
+.apply__intro { grid-area: intro; }
+.apply .chat-card { grid-area: chat; }
+.apply__details { grid-area: details; }
+
+.contact-facts { display: grid; gap: 0.75rem; margin: 0; }
+.contact-fact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 0.9rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius);
+  background: var(--lilac-100);
+}
+.contact-fact__icon {
+  display: grid;
+  grid-row: span 2;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--purple);
+}
+.contact-fact__label { color: var(--ink-2); font-size: 0.85rem; font-weight: 600; }
+.contact-fact__value { margin: 0; font-family: var(--font-display); font-size: 1.05rem; font-weight: 700; }
+
+.apply__help { margin-top: 1.5rem; color: var(--ink-2); }
+.apply__help a { color: var(--purple); font-weight: 700; }
+
+@media (min-width: 1024px) {
+  .apply__inner {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas: "intro chat" "details chat";
+    gap: 2rem 5rem;
+    align-items: start;
+  }
+  .apply .chat-card { align-self: center; }
+}
