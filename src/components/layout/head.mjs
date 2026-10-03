@@ -20,6 +20,8 @@ export function head({ title, description, path = '', cssHref, jsonLd = true, no
         '@type': 'Organization',
         name: site.name,
         description: site.description,
+        ...(site.legal.companyName ? { legalName: site.legal.companyName } : {}),
+        ...(site.legal.cnpj ? { taxID: site.legal.cnpj } : {}),
         ...(siteUrl() ? { url: siteUrl(), logo: absolute('assets/images/icon-512.png') } : {}),
         ...(site.social.some((s) => s.url) ? { sameAs: site.social.filter((s) => s.url).map((s) => s.url) } : {}),
         ...(site.contact.city

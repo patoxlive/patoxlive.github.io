@@ -268,6 +268,8 @@ export const home = {
     privacy: 'Política de privacidade',
     rights: 'Todos os direitos reservados.',
     companyMissing: ph('Razão social e CNPJ'),
+    companyNameMissing: ph('Razão social'),
+    cnpjMissing: ph('CNPJ'),
     disclaimer: ph('Se aplicável: informe o vínculo da PATOX LIVE com o programa de agências do TikTok LIVE'),
   },
 

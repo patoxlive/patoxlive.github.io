@@ -37,7 +37,7 @@ const contactList = {
 
 export const legal = {
   updatedLabel: 'Última atualização:',
-  updatedAt: '1º de outubro de 2026',
+  updatedAt: '3 de outubro de 2026',
   back: 'Voltar para o início',
   tocTitle: 'Nesta página',
   summaryTitle: 'Em resumo',

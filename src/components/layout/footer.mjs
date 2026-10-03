@@ -12,9 +12,11 @@ export function footer(c, { base = '' } = {}) {
     ? html`<a${attrs(whatsappAttrs('contato'))}>${contact.whatsappLabel}${opensWhatsapp}</a>`
     : ph('número do WhatsApp');
   const email = contact.email ? html`<a href="mailto:${contact.email}">${contact.email}</a>` : ph('e-mail de contato');
-  const company = site.legal.companyName
-    ? `${site.legal.companyName}${site.legal.cnpj ? ` | CNPJ ${site.legal.cnpj}` : ''}`
-    : c.companyMissing;
+  const { companyName, cnpj } = site.legal;
+  const company =
+    companyName || cnpj
+      ? html`${companyName || c.companyNameMissing} | CNPJ ${cnpj || c.cnpjMissing}`
+      : c.companyMissing;
 
   return html`
   <footer class="site-footer">

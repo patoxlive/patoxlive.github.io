@@ -82,7 +82,7 @@ export const site = {
   /** Dados legais exibidos no rodapé e nas páginas de termos/privacidade. */
   legal: {
     companyName: '', // Razão social
-    cnpj: '',
+    cnpj: '69.454.438/0001-46',
   },
 
   /** Imagens oficiais da marca. Para trocar, substitua os arquivos em
