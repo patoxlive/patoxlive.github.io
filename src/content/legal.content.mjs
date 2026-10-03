@@ -20,9 +20,10 @@ import { site } from '../config/site.config.mjs';
 
 const { contact, legal: company } = site;
 
-const companyName = company.companyName || ph('razão social');
 const cnpj = company.cnpj || ph('CNPJ');
 const place = `${contact.city}, ${contact.state}, ${contact.country}`;
+/** Sede registrada (endereço do contador). A equipe trabalha no escritório de `place`. */
+const seat = company.registeredCity ? `${company.registeredCity} (${company.registeredStateCode})` : ph('cidade da sede registrada');
 const email = html`<a href="mailto:${contact.email}">${contact.email}</a>`;
 const privacyLink = html`<a href="${site.pages.privacy}">Política de privacidade</a>`;
 const termsLink = html`<a href="${site.pages.terms}">Termos de uso</a>`;
@@ -56,7 +57,7 @@ export const legal = {
         id: 'quem-somos',
         title: 'Quem somos',
         body: [
-          ['A PATOX LIVE é uma agência especializada em TikTok LIVE, com escritório em ', place, '. Razão social: ', companyName, '. CNPJ: ', cnpj, '.'],
+          ['A PATOX LIVE é uma agência especializada em TikTok LIVE, inscrita no CNPJ sob o nº ', cnpj, '. A empresa tem sede registrada em ', seat, ', e a equipe trabalha no nosso escritório em ', place, '.'],
           'TikTok, Instagram e WhatsApp são marcas de seus respectivos titulares. A PATOX LIVE é uma empresa independente e não fala em nome dessas plataformas.',
         ],
       },
@@ -191,7 +192,7 @@ export const legal = {
         id: 'responsavel',
         title: 'Quem é responsável pelos seus dados',
         body: [
-          ['A responsável pelo tratamento dos dados (controladora) é a PATOX LIVE, agência de TikTok LIVE com escritório em ', place, '. Razão social: ', companyName, '. CNPJ: ', cnpj, '.'],
+          ['A responsável pelo tratamento dos dados (controladora) é a PATOX LIVE, agência de TikTok LIVE inscrita no CNPJ sob o nº ', cnpj, ', com sede registrada em ', seat, ' e escritório em ', place, '.'],
           ['Contato para assuntos de privacidade: ', email, '.'],
         ],
       },

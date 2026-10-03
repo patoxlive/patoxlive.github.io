@@ -12,11 +12,7 @@ export function footer(c, { base = '' } = {}) {
     ? html`<a${attrs(whatsappAttrs('contato'))}>${contact.whatsappLabel}${opensWhatsapp}</a>`
     : ph('número do WhatsApp');
   const email = contact.email ? html`<a href="mailto:${contact.email}">${contact.email}</a>` : ph('e-mail de contato');
-  const { companyName, cnpj } = site.legal;
-  const company =
-    companyName || cnpj
-      ? html`${companyName || c.companyNameMissing} | CNPJ ${cnpj || c.cnpjMissing}`
-      : c.companyMissing;
+  const cnpj = site.legal.cnpj ? `CNPJ ${site.legal.cnpj}` : c.cnpjMissing;
 
   return html`
   <footer class="site-footer">
@@ -52,8 +48,8 @@ export function footer(c, { base = '' } = {}) {
     <div class="container site-footer__bottom">
       <div class="site-footer__legal-text">
         <p>© ${year} ${site.name}. ${c.rights}</p>
-        <p>${company}</p>
-        <p>${c.disclaimer}</p>
+        <p>${cnpj}</p>
+        ${c.disclaimer ? html`<p>${c.disclaimer}</p>` : ''}
       </div>
       <ul class="site-footer__legal" role="list">
         <li><a href="${site.pages.terms}">${c.terms}</a></li>

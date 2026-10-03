@@ -267,10 +267,10 @@ export const home = {
     terms: 'Termos de uso',
     privacy: 'Política de privacidade',
     rights: 'Todos os direitos reservados.',
-    companyMissing: ph('Razão social e CNPJ'),
-    companyNameMissing: ph('Razão social'),
     cnpjMissing: ph('CNPJ'),
-    disclaimer: ph('Se aplicável: informe o vínculo da PATOX LIVE com o programa de agências do TikTok LIVE'),
+    /** Vínculo com o programa de agências do TikTok LIVE. Fica vazio ('') enquanto a
+     *  PATOX LIVE não for aprovada no LIVE Backstage; depois da aprovação, escreva aqui. */
+    disclaimer: '',
   },
 
   mobileBar: { label: 'Quero me agenciar', href: '#agenciamento' },

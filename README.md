@@ -50,21 +50,26 @@ O site já vem preparado para funcionar só em HTTPS:
 
 ### Placeholders (informação real que falta)
 
-Tudo o que não foi informado aparece no site **em amarelo, entre colchetes**, por exemplo `[Razão social e CNPJ]`.
-Nos arquivos de conteúdo eles estão escritos assim:
+Quando um texto depende de uma informação que ainda não existe, o site mostra o espaço **em amarelo, entre colchetes**, para ninguém esquecer de preencher. Hoje o site não tem nenhum.
+Nos arquivos de conteúdo eles são escritos com `ph('...')`:
 
 ```js
-companyMissing: ph('Razão social e CNPJ'),
+title: ph('Título da nova seção'),
 ```
 
 Para preencher, troque por um texto normal:
 
 ```js
-companyMissing: 'Nome da Empresa Ltda. | CNPJ 00.000.000/0001-00',
+title: 'Título de verdade',
 ```
 
-A razão social e o CNPJ também podem ser preenchidos uma vez só em `site.legal` (`src/config/site.config.mjs`): aí eles aparecem no rodapé e nas páginas legais.
 `npm run placeholders` mostra a lista do que ainda falta, incluindo configurações pendentes.
+
+### Dados da empresa
+
+- O CNPJ e a cidade da sede registrada ficam em `site.legal` (`src/config/site.config.mjs`) e aparecem no rodapé e nas páginas legais.
+- Por escolha da empresa, o site mostra só o nome fantasia (PATOX LIVE): a razão social não aparece.
+- A sede registrada (endereço do contador) é em São Paulo (SP). A equipe trabalha no escritório de Mutuípe (BA), que é o endereço mostrado no resto do site.
 
 > Regra da marca: não publique números, resultados, prêmios, parceiros, depoimentos ou promessas de ganhos que não sejam reais.
 
@@ -131,8 +136,7 @@ Outras hospedagens grátis também funcionam com a pasta `dist/`, como a Cloudfl
 
 ## Antes de publicar
 
-- [ ] Razão social e CNPJ em `site.legal` (aparecem no rodapé e nas páginas legais)
-- [ ] Vínculo com o programa de agências do TikTok LIVE (`footer.disclaimer` em `home.content.mjs`)
+- [ ] Quando a PATOX LIVE for aprovada no LIVE Backstage do TikTok, escrever o vínculo com o programa de agências em `footer.disclaimer` (`home.content.mjs`)
 - [ ] Certificado SSL ativo na hospedagem
 - [ ] `site.url` com o domínio final em `https://` (ativa o link canônico e o sitemap)
 - [ ] Testar os botões do WhatsApp no celular e no computador

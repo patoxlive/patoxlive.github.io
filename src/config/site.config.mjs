@@ -79,10 +79,14 @@ export const site = {
     { label: 'TikTok', handle: '@patoxlivebr', url: 'https://www.tiktok.com/@patoxlivebr' },
   ],
 
-  /** Dados legais exibidos no rodapé e nas páginas de termos/privacidade. */
+  /** Dados legais exibidos no rodapé e nas páginas de termos/privacidade.
+   *  Por escolha da empresa, o site mostra só o nome fantasia (PATOX LIVE) e o CNPJ:
+   *  a razão social não aparece. */
   legal: {
-    companyName: '', // Razão social
     cnpj: '69.454.438/0001-46',
+    /** Cidade da sede registrada (endereço do contador). A equipe trabalha no escritório de contact.city. */
+    registeredCity: 'São Paulo',
+    registeredStateCode: 'SP',
   },
 
   /** Imagens oficiais da marca. Para trocar, substitua os arquivos em
