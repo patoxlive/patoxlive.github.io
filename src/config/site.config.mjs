@@ -35,7 +35,7 @@ export const site = {
     description:
       'A PATOX LIVE é uma agência especializada em TikTok LIVE para streamers e criadores. Fale com a equipe no WhatsApp para se agenciar ou para entrar no recrutamento de novos talentos.',
     ogImage: 'assets/images/og-image.jpg',
-    ogImageAlt: 'Pato da PATOX LIVE, de moletom roxo, ao lado da marca Patox LIVE',
+    ogImageAlt: 'Pato da PATOX LIVE, de moletom roxo, ao lado da marca PATOX LIVE',
   },
 
   /** Contatos exibidos no site (suporte, rodapé, páginas legais). */

@@ -37,7 +37,7 @@ export const home = {
   hero: {
     kicker: 'Agência de TikTok LIVE',
     title: 'Hora de sair da casca',
-    tagline: 'Seu LIVE. Seu público. Sua evolução.',
+    tagline: 'Sua LIVE. Seu público. Sua evolução.',
     lead: 'A PATOX LIVE é uma agência especializada em TikTok LIVE para streamers e criadores que querem começar ou evoluir no ao vivo.',
     primary: { label: 'Quero me agenciar', note: 'Para streamers e criadores', href: '#agenciamento' },
     secondary: { label: 'Quero fazer parte da ninhada', note: 'Para quem quer recrutar talentos', whatsapp: 'ninhada' },
@@ -113,7 +113,7 @@ export const home = {
       {
         icon: 'cap',
         title: 'Treinamento',
-        text: 'Um treinamento rápido para você começar com o pé direito, seja como streamer ou como recrutador.',
+        text: 'Um treinamento rápido para você começar com o pé direito, seja como streamer ou como recrutador(a).',
         owner: 'Gabriel',
       },
       {
@@ -167,7 +167,7 @@ export const home = {
     eggLabel: 'Abrir o ovo e descobrir o próximo passo',
     cta: { label: 'Quero me agenciar', href: '#agenciamento' },
     replay: 'Ver de novo',
-    status: 'O ovo abriu. Pronto para começar? Use o botão Quero me agenciar para ir ao agenciamento pelo WhatsApp.',
+    status: 'O ovo abriu. Pronto para começar? Use o botão “Quero me agenciar” para ir ao agenciamento pelo WhatsApp.',
     imageAlt: 'Pato da PATOX LIVE saindo do ovo',
   },
 
@@ -228,7 +228,7 @@ export const home = {
     title: 'Precisou de ajuda?',
     text: 'Dúvidas sobre suas LIVEs, a agência ou o recrutamento? Quem cuida do suporte é a nossa equipe PATOX LIVE, e ela está na escuta.',
     windowTitle: 'Suporte PATOX LIVE',
-    windowStatus: 'Todos os dias, 8h às 19h',
+    windowStatus: cap(contact.hours),
     channels: {
       whatsapp: 'WhatsApp',
       email: 'E-mail',

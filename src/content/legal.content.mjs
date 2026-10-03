@@ -151,7 +151,7 @@ export const legal = {
       },
       {
         id: 'alteracoes',
-        title: 'Alterações destes termos',
+        title: 'Alterações destes Termos',
         body: [
           'Podemos atualizar estes Termos a qualquer momento. A versão em vigor é sempre a publicada nesta página, com a data da última atualização.',
         ],
@@ -266,7 +266,7 @@ export const legal = {
               'Conversas e dados de contato: pelo tempo necessário para atender ao seu pedido ou, se houver parceria, enquanto ela durar.',
             ],
           },
-          'Depois disso, os dados são excluídos ou anonimizados, exceto quando a lei exigir ou permitir guardá-los por mais tempo, por exemplo para cumprir obrigações legais ou exercer direitos.',
+          'Depois disso, os dados são excluídos ou anonimizados, exceto quando a lei exigir ou permitir guardá-los por mais tempo, por exemplo, para cumprir obrigações legais ou exercer direitos.',
         ],
       },
       {
@@ -307,7 +307,7 @@ export const legal = {
       },
       {
         id: 'alteracoes',
-        title: 'Alterações desta política',
+        title: 'Alterações desta Política',
         body: [
           'Podemos atualizar esta Política para refletir mudanças no site, nos nossos serviços ou na lei. A versão em vigor é sempre a publicada nesta página, com a data da última atualização.',
         ],
