@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Painel da PATOX | Área do Streamer</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1D0C30">
+  <link rel="icon" href="../assets/images/favicon.ico" sizes="any">
+  <link rel="icon" href="../assets/images/favicon-32.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..800&amp;family=Unbounded:wght@500..800&amp;display=swap">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="stylesheet" href="area.css">
+</head>
+<body class="area-body">
+  <header class="area-top">
+    <div class="area-top__inner">
+      <a class="area-brand" href="admin.html" aria-label="Painel da PATOX">
+        <img src="../assets/images/patox-marca-240.webp" srcset="../assets/images/patox-marca-240.webp 1x, ../assets/images/patox-marca-462.webp 2x" width="92" height="28" alt="">
+        <span class="area-brand__tag">LIVE</span>
+        <span class="area-brand__sub">Painel da equipe</span>
+      </a>
+      <span class="area-top__spacer"></span>
+      <a class="area-top__link" href="curso.html">Ver as aulas</a>
+      <div data-user-menu></div>
+    </div>
+  </header>
+
+  <main class="admin" id="app" hidden>
+    <div class="admin__head">
+      <h1>Painel da PATOX</h1>
+      <p>Cadastre os streamers da ninhada e organize as aulas da Área do Streamer.</p>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Seções">
+      <button type="button" role="tab" aria-selected="true" aria-controls="tab-streamers" id="t-streamers">Streamers</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="tab-aulas" id="t-aulas">Aulas</button>
+    </div>
+
+    <!-- STREAMERS -->
+    <section id="tab-streamers" role="tabpanel" aria-labelledby="t-streamers" style="display:grid;gap:1.5rem">
+      <div class="card">
+        <div class="card__head"><h2>Cadastrar streamer</h2></div>
+        <form class="card__body" id="form-novo" autocomplete="off" style="display:grid;gap:1rem">
+          <div class="grid-form">
+            <div class="field">
+              <label for="n-nome">Nome</label>
+              <input class="input" id="n-nome" required placeholder="Ex.: Ana Souza">
+            </div>
+            <div class="field">
+              <label for="n-login">Usuário ou e-mail</label>
+              <input class="input" id="n-login" required autocapitalize="none" spellcheck="false" placeholder="Ex.: ana.souza">
+            </div>
+            <div class="field">
+              <label for="n-senha">Senha inicial</label>
+              <div class="input-wrap">
+                <input class="input" id="n-senha" required minlength="6">
+                <button class="input-wrap__btn" type="button" id="n-gerar" aria-label="Gerar senha" title="Gerar senha"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></button>
+              </div>
+            </div>
+            <div class="field">
+              <label for="n-papel">Tipo de acesso</label>
+              <select class="select" id="n-papel">
+                <option value="streamer">Streamer (assiste as aulas)</option>
+                <option value="admin">Equipe PATOX (acessa este painel)</option>
+              </select>
+            </div>
+          </div>
+          <span class="field__hint">O usuário pode ter letras, números, ponto, traço ou _ (sem espaços). Também dá para usar um e-mail.</span>
+          <div class="alert alert--erro" id="n-erro" hidden></div>
+          <div><button class="btn btn--primary" type="submit" id="n-btn">Cadastrar</button></div>
+        </form>
+      </div>
+
+      <div class="card" id="msg-pronta" hidden>
+        <div class="card__head"><h2>Mensagem pronta para enviar</h2><button class="btn btn--primary btn--sm" type="button" id="msg-copiar">Copiar mensagem</button></div>
+        <div class="card__body"><textarea class="textarea" id="msg-texto" rows="9" readonly></textarea></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><h2>Ninhada cadastrada</h2><span class="muted" id="contagem"></span></div>
+        <div id="lista-streamers"><div class="card__body muted">Carregando…</div></div>
+      </div>
+    </section>
+
+    <!-- AULAS -->
+    <section id="tab-aulas" role="tabpanel" aria-labelledby="t-aulas" hidden style="display:grid;gap:1.5rem">
+      <div class="alert alert--info">Os vídeos ficam guardados em um espaço privado: só quem faz login consegue assistir, e cada aula só libera depois que a anterior é concluída. Limite de 50 MB por vídeo.</div>
+      <div id="lista-modulos"></div>
+      <div><button class="btn btn--outline" type="button" id="novo-modulo">+ Novo módulo</button></div>
+    </section>
+  </main>
+
+  <dialog class="modal" id="dlg-aula" style="width:min(560px,calc(100vw - 2rem))">
+    <form class="modal__body" id="form-aula">
+      <h2 id="aula-dlg-titulo">Nova aula</h2>
+      <div class="field">
+        <label for="a-titulo">Título da aula</label>
+        <input class="input" id="a-titulo" required>
+      </div>
+      <div class="field">
+        <label for="a-desc">Descrição (opcional)</label>
+        <textarea class="textarea" id="a-desc" rows="3"></textarea>
+      </div>
+      <div class="field">
+        <span class="field__label">Vídeo</span>
+        <label class="drop" id="a-drop">
+          <input type="file" id="a-video" accept="video/mp4,video/webm,video/quicktime" hidden>
+          <strong id="a-drop-txt">Escolher vídeo (MP4)</strong>
+          <span id="a-drop-sub">Até 50 MB. Dica: exporte em 720p para ficar leve.</span>
+        </label>
+      </div>
+      <label class="check"><input type="checkbox" id="a-pub" checked> Aula visível para os streamers</label>
+      <div class="upload" id="a-upload" hidden>
+        <div class="upload__bar"><span id="a-upbar"></span></div>
+        <span class="muted" id="a-uptxt">Enviando…</span>
+      </div>
+      <div class="alert alert--erro" id="a-erro" hidden></div>
+      <div class="modal__acoes">
+        <button class="btn btn--ghost btn--sm" type="button" id="a-cancelar">Cancelar</button>
+        <button class="btn btn--primary btn--sm" type="submit" id="a-salvar">Salvar aula</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="dlg-modulo">
+    <form class="modal__body" id="form-modulo">
+      <h2 id="m-dlg-titulo">Módulo</h2>
+      <div class="field">
+        <label for="m-titulo">Nome do módulo</label>
+        <input class="input" id="m-titulo" required>
+      </div>
+      <div class="field">
+        <label for="m-desc">Descrição (opcional)</label>
+        <textarea class="textarea" id="m-desc" rows="2"></textarea>
+      </div>
+      <label class="check"><input type="checkbox" id="m-pub" checked> Módulo visível para os streamers</label>
+      <div class="modal__acoes">
+        <button class="btn btn--ghost btn--sm" type="button" id="m-cancelar">Cancelar</button>
+        <button class="btn btn--primary btn--sm" type="submit">Salvar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal" id="dlg-confirma">
+    <form class="modal__body" method="dialog">
+      <h2 id="c-titulo"></h2>
+      <p id="c-texto" class="muted" style="font-size:1rem"></p>
+      <div class="field" id="c-campo" hidden>
+        <label for="c-input" id="c-label"></label>
+        <input class="input" id="c-input">
+      </div>
+      <div class="modal__acoes">
+        <button class="btn btn--ghost btn--sm" value="nao">Cancelar</button>
+        <button class="btn btn--primary btn--sm" value="sim" id="c-ok">Confirmar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="area.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

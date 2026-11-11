@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Área do Streamer | PATOX LIVE</title>
+  <meta name="description" content="Área exclusiva para streamers agenciados pela PATOX LIVE.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#1D0C30">
+  <link rel="icon" href="../assets/images/favicon.ico" sizes="any">
+  <link rel="icon" href="../assets/images/favicon-32.png" type="image/png">
+  <link rel="apple-touch-icon" href="../assets/images/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400..800&amp;family=Unbounded:wght@500..800&amp;display=swap">
+  <link rel="stylesheet" href="../assets/css/styles.css">
+  <link rel="stylesheet" href="area.css">
+</head>
+<body class="area-body">
+  <main class="login">
+    <section class="login__stage" aria-hidden="true">
+      <a class="area-brand" href="../" tabindex="-1">
+        <img src="../assets/images/patox-marca-clara-240.webp" srcset="../assets/images/patox-marca-clara-240.webp 1x, ../assets/images/patox-marca-clara-462.webp 2x" width="92" height="28" alt="">
+        <span class="area-brand__tag">LIVE</span>
+      </a>
+      <div class="login__stage-copy">
+        <span class="login__kicker"><span class="live-dot"></span> Exclusivo para a ninhada</span>
+        <h1 class="login__title">Área do <em>Streamer</em></h1>
+        <p class="login__lead">Aulas da PATOX LIVE para você sair da casca e crescer no ao vivo.</p>
+      </div>
+      <img class="login__duck" src="../assets/images/pato-ovo-aberto-600.webp" srcset="../assets/images/pato-ovo-aberto-600.webp 600w, ../assets/images/pato-ovo-aberto-900.webp 900w" sizes="400px" width="600" height="727" alt="">
+    </section>
+
+    <section class="login__panel">
+      <div class="login__panel-top">
+        <a class="area-brand login__mobile-brand" href="../">
+          <img src="../assets/images/patox-marca-240.webp" srcset="../assets/images/patox-marca-240.webp 1x, ../assets/images/patox-marca-462.webp 2x" width="92" height="28" alt="PATOX">
+          <span class="area-brand__tag">LIVE</span>
+        </a>
+        <a class="area-top__link" href="../">← Voltar ao site</a>
+      </div>
+
+      <div class="login__form-wrap">
+        <form class="login__form" id="form-login" novalidate>
+          <img class="login__hero-mini" src="../assets/images/pato-ovo-aberto-600.webp" width="120" height="145" alt="">
+          <h2>Entrar</h2>
+          <p>Use o usuário e a senha que a PATOX LIVE enviou para você.</p>
+
+          <div class="alert alert--erro" id="erro" role="alert" hidden></div>
+          <div class="alert alert--info" id="aviso" role="status" hidden></div>
+
+          <div class="field">
+            <label for="login">Usuário ou e-mail</label>
+            <input class="input" id="login" name="login" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required>
+          </div>
+          <div class="field">
+            <label for="senha">Senha</label>
+            <div class="input-wrap">
+              <input class="input" id="senha" name="senha" type="password" autocomplete="current-password" required>
+              <button class="input-wrap__btn" type="button" id="ver-senha" aria-label="Mostrar senha" aria-pressed="false"></button>
+            </div>
+          </div>
+
+          <button class="btn btn--primary btn--lg btn--block" type="submit" id="entrar"><span class="btn__label">Entrar na área</span></button>
+
+          <p class="login__help">Esqueceu a senha ou ainda não tem acesso?<br><a id="link-ajuda" href="#" target="_blank" rel="noopener">Fale com a PATOX no WhatsApp</a></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  <script src="area.js"></script>
+  <script>
+  (async function () {
+    const { sb, ICONES, WHATSAPP, loginParaEmail } = window.PATOX;
+    const form = document.getElementById("form-login");
+    const erro = document.getElementById("erro");
+    const aviso = document.getElementById("aviso");
+    const btn = document.getElementById("entrar");
+    const senha = document.getElementById("senha");
+    const ver = document.getElementById("ver-senha");
+    document.getElementById("link-ajuda").href = WHATSAPP;
+    ver.innerHTML = ICONES.eye;
+
+    const params = new URLSearchParams(location.search);
+    if (params.get("motivo") === "bloqueado") {
+      aviso.textContent = "Seu acesso está pausado. Fale com a PATOX LIVE para liberar.";
+      aviso.hidden = false;
+    }
+
+    const destino = () => {
+      const v = params.get("voltar");
+      return v && /^[a-z]+\.html$/.test(v) ? v : "curso.html";
+    };
+
+    // Já está logado? Vai direto para as aulas.
+    const { data } = await sb.auth.getSession();
+    if (data.session && !params.get("motivo")) { location.replace(destino()); return; }
+
+    ver.addEventListener("click", () => {
+      const mostrar = senha.type === "password";
+      senha.type = mostrar ? "text" : "password";
+      ver.setAttribute("aria-pressed", String(mostrar));
+      ver.setAttribute("aria-label", mostrar ? "Esconder senha" : "Mostrar senha");
+    });
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      erro.hidden = true; aviso.hidden = true;
+      const login = form.login.value.trim();
+      if (!login || !senha.value) {
+        erro.textContent = "Preencha o usuário e a senha.";
+        erro.hidden = false;
+        return;
+      }
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner" aria-hidden="true"></span><span class="btn__label">Entrando…</span>';
+      const { error } = await sb.auth.signInWithPassword({ email: loginParaEmail(login), password: senha.value });
+      if (error) {
+        const msg = /banned/i.test(error.message)
+          ? "Seu acesso está pausado. Fale com a PATOX LIVE para liberar."
+          : /invalid/i.test(error.message)
+            ? "Usuário ou senha incorretos. Confira e tente de novo."
+            : "Não foi possível entrar agora. Verifique sua internet e tente de novo.";
+        erro.textContent = msg;
+        erro.hidden = false;
+        btn.disabled = false;
+        btn.innerHTML = '<span class="btn__label">Entrar na área</span>';
+        return;
+      }
+      location.replace(destino());
+    });
+  })();
+  </script>
+</body>
+</html>
