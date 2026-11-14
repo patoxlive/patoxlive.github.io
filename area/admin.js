@@ -706,6 +706,7 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
     const reais = (v) => Number(String(v).replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")) || 0;
     const novas = [...$("l-tabela").querySelectorAll("tr[data-l]")].map((tr, i) => {
       const g = (f) => tr.querySelector(`[data-f="${f}"]`).value;
+      const soDigitos = (v) => Number(String(v || "").replace(/\D/g, "")) || 0;
       return { id: ligas[i].id, nome: g("nome").trim(), min_diamantes: i === 0 ? 0 : soDigitos(g("min_diamantes")), valor_avancou: reais(g("valor_avancou")), valor_manteve: reais(g("valor_manteve")), cor: g("cor") };
     });
     for (let i = 0; i < novas.length; i++) {
