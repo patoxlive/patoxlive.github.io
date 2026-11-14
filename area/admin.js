@@ -440,7 +440,7 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
   });
 
   // ---------- Ranking: planilha do TikTok, criadores, ligas e aviso ----------
-  let ligas = [], criadoresAdm = [], perfisStreamers = [];
+  let ligas = [], criadoresAdm = [], perfisStreamers = [], periodoAdm = "30 dias";
   const M0 = mesISO(0), M1 = mesISO(-1), M2 = mesISO(-2);
   const horas = (h) => Number(h || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " h";
   const quandoTxt = (iso) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Bahia" }).replace(",", " às");
@@ -451,7 +451,7 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
       sb.from("criadores").select("*").order("usuario"),
       sb.from("profiles").select("id, nome, login").eq("papel", "streamer").order("nome"),
       sb.from("diamantes_mes").select("*").in("mes", [M0, M1, M2]),
-      sb.from("desempenho").select("*").order("data", { ascending: false }).limit(2000),
+      sb.from("desempenho").select("*").order("data", { ascending: false }).order("exportado_em", { ascending: false }).limit(2000),
       sb.from("penalidades").select("*"),
       sb.from("config").select("*"),
     ]);
@@ -465,6 +465,8 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
     const dm = new Map((d.data || []).map((r) => [r.criador_id + "|" + r.mes, r.quantidade]));
     const pn = new Map((pen.data || []).map((r) => [r.criador_id + "|" + r.mes, r]));
     const ultData = f.data?.[0]?.data;
+    const u0 = f.data?.[0];
+    periodoAdm = u0?.periodo === "mes" ? `${u0.periodo_inicio.slice(8, 10)}/${u0.periodo_inicio.slice(5, 7)} a ${u0.periodo_fim.slice(8, 10)}/${u0.periodo_fim.slice(5, 7)}` : "30 dias";
     const foto = new Map((f.data || []).filter((x) => x.data === ultData).map((x) => [x.criador_id, x]));
     criadoresAdm = (c.data || []).map((cr) => ({ ...cr, foto: foto.get(cr.id) || {}, dm0: dm.get(cr.id + "|" + M0) || 0, dm1: dm.get(cr.id + "|" + M1) || 0, dm2: dm.get(cr.id + "|" + M2) || 0, pen0: pn.get(cr.id + "|" + M0), pen1: pn.get(cr.id + "|" + M1) }))
       .sort((a, b) => (b.ativo - a.ativo) || ((b.foto.diamantes || 0) - (a.foto.diamantes || 0)));
@@ -507,10 +509,10 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
       </div>
       <div style="overflow-x:auto">
       <table class="tabela">
-        <thead><tr><th>TikTok</th><th>Diamantes (30 dias)</th><th>Horas de LIVE</th><th>Dias válidos</th><th>Liga em ${nomeMes(mesISO(1))}*</th><th>Prêmio de ${nomeMes(M0)}</th><th>Conta no site</th><th>Perdeu prêmio por ${nomeMes(M0)}?</th></tr></thead>
+        <thead><tr><th>TikTok</th><th>Diamantes (${periodoAdm})</th><th>Horas de LIVE</th><th>Dias válidos</th><th>Liga em ${nomeMes(mesISO(1))}*</th><th>Prêmio de ${nomeMes(M0)}</th><th>Conta no site</th><th>Perdeu prêmio por ${nomeMes(M0)}?</th></tr></thead>
         <tbody>${linhas}</tbody>
       </table></div>
-      <div class="card__body muted" style="font-size:.85rem;border-top:1px solid var(--lilac-100)">* Projeção com os diamantes dos últimos 30 dias. “Perdeu prêmio” zera a premiação que seria paga no mês seguinte (ex.: banimento de mais de 24h).</div>`;
+      <div class="card__body muted" style="font-size:.85rem;border-top:1px solid var(--lilac-100)">* Projeção com os diamantes ${periodoAdm === "30 dias" ? "dos últimos 30 dias" : "do mês até agora"}. “Perdeu prêmio” zera a premiação que seria paga no mês seguinte (ex.: banimento de mais de 24h).</div>`;
   }
 
   $("cr-lista").addEventListener("change", async (e) => {
@@ -564,38 +566,88 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
       document.head.appendChild(s);
     });
   }
-  function lerPlanilha(linhas) {
-    const topo = String((linhas[0] || [])[0] || "");
-    const m = topo.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}:\d{2})/);
-    if (!m) throw new Error("Não encontrei a data de exportação. Use a planilha “Gerenciar criadores” do TikTok, sem editar.");
-    const exportado = `${m[1]}-${m[2]}-${m[3]}T${m[4]}Z`;
-    const cab = (linhas[1] || []).map((h) => String(h || "").trim());
-    const col = (nome) => {
+  // Lê as duas planilhas do TikTok LIVE Backstage:
+  //  • "Dados do criador" (mês atual, ex.: 01/11 ~ 13/11) — a melhor para as ligas
+  //  • "Gerenciar criadores" (últimos 30 dias)
+  function lerPlanilha(linhas, nomeArquivo) {
+    const txt = (v) => (v == null ? "" : String(v).trim());
+    const data = (v) => { const x = txt(v).match(/(\d{4})[:-](\d{2})[:-](\d{2}) (\d{2}:\d{2}:\d{2})/); return x ? `${x[1]}-${x[2]}-${x[3]}T${x[4]}Z` : null; };
+    const inteiro = (v) => { const s = txt(v); if (!s || s === "-") return null; const n = parseInt(s.replace(/\D/g, ""), 10); return isNaN(n) ? null : n; };
+    const num = (v) => inteiro(v) ?? 0;
+    const decimal = (v) => { const s = txt(v); if (!s || s === "-") return 0; const n = parseFloat(s.replace(",", ".")); return isNaN(n) ? 0 : n; };
+    const duracao = (v) => {
+      const s = txt(v);
+      if (!/[hms]/.test(s)) return decimal(s);
+      const h = +(s.match(/(\d+)\s*h/) || [0, 0])[1], m = +(s.match(/(\d+)\s*m/) || [0, 0])[1], sg = +(s.match(/(\d+)\s*s/) || [0, 0])[1];
+      return Math.round((h + m / 60 + sg / 3600) * 100) / 100;
+    };
+    const achar = (cab, nome, opcional) => {
       const i = cab.findIndex((h) => h.toLowerCase().startsWith(nome.toLowerCase()));
-      if (i < 0) throw new Error(`A planilha não tem a coluna “${nome}”.`);
+      if (i < 0 && !opcional) throw new Error(`A planilha não tem a coluna “${nome}”.`);
       return i;
     };
+    const pega = (r, i) => (i >= 0 ? r[i] : null);
+
+    const cab0 = (linhas[0] || []).map(txt);
+    // ---------- "Dados do criador" (mês) ----------
+    if (cab0.some((h) => h.startsWith("Período dos dados"))) {
+      const C = {
+        per: achar(cab0, "Período dos dados"), id: achar(cab0, "ID do criador"), usuario: achar(cab0, "Nome do criador"),
+        entrou: achar(cab0, "Horário de ingresso", true), dia: achar(cab0, "Diamantes"), horas: achar(cab0, "Duração da LIVE"),
+        dias: achar(cab0, "Dias válidos de início de LIVE"), seg: achar(cab0, "Novos seguidores", true), tr: achar(cab0, "Transmissões de LIVE", true),
+        mp: achar(cab0, "Diamantes do mês passado", true), bat: achar(cab0, "Batalhas", true), fa: achar(cab0, "Total de Diamantes do Fã-clube", true),
+        tfas: achar(cab0, "Total de fãs", true), fas: achar(cab0, "Fãs ativos do Fã-clube", true), st: achar(cab0, "Status", true),
+      };
+      // "Status" pode bater em "Status da graduação"; usa a coluna exata
+      C.st = cab0.findIndex((h) => h === "Status");
+      const out = [];
+      let inicio = null, fim = null;
+      for (const r of linhas.slice(1)) {
+        const id = txt(r[C.id]);
+        if (!/^\d+$/.test(id)) continue;
+        const p = txt(r[C.per]).match(/(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})/);
+        if (p) { inicio = p[1]; fim = p[2]; }
+        out.push({
+          id, usuario: txt(r[C.usuario]), entrou_em: data(pega(r, C.entrou)),
+          ativo: txt(pega(r, C.st)).toLowerCase() !== "saiu",
+          diamantes: num(r[C.dia]), horas_live: duracao(r[C.horas]), dias_validos: num(r[C.dias]),
+          novos_seguidores: inteiro(pega(r, C.seg)), transmissoes: inteiro(pega(r, C.tr)),
+          diamantes_mes_passado: inteiro(pega(r, C.mp)), batalhas: inteiro(pega(r, C.bat)),
+          diamantes_fa: num(pega(r, C.fa)), total_fas: inteiro(pega(r, C.tfas)), fas_ativos: num(pega(r, C.fas)),
+        });
+      }
+      if (!out.length) throw new Error("Não encontrei nenhum criador na planilha.");
+      if (!inicio || !fim) throw new Error("Não encontrei o período dos dados na planilha.");
+      // A hora da exportação está no nome do arquivo (ex.: Dados_do_criador_2026_11_14_10_13_UTC0.xlsx)
+      const f = txt(nomeArquivo).match(/(\d{4})_(\d{2})_(\d{2})_(\d{2})_(\d{2})_UTC0/);
+      const exportado = f ? `${f[1]}-${f[2]}-${f[3]}T${f[4]}:${f[5]}:00Z` : new Date().toISOString();
+      return { exportado, periodo: "mes", inicio, fim, linhas: out };
+    }
+
+    // ---------- "Gerenciar criadores" (últimos 30 dias) ----------
+    const m = txt((linhas[0] || [])[0]).match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}:\d{2})/);
+    if (!m) throw new Error("Não reconheci a planilha. Use “Dados do criador” ou “Gerenciar criadores” do TikTok LIVE Backstage, sem editar.");
+    const exportado = `${m[1]}-${m[2]}-${m[3]}T${m[4]}Z`;
+    const cab = (linhas[1] || []).map(txt);
     const C = {
-      id: col("ID do criador"), usuario: col("Nome do criador"), entrou: col("Horário de ingresso"), ultima: col("Última LIVE"),
-      seg: col("Seguidores"), dia: col("Diamantes nos últimos 30 dias"), dias: col("Dias válidos de início de LIVE"),
-      horas: col("Duração da LIVE"), fa: col("Diamantes do Fã-clube"), fas: col("Fãs ativos do Fã-clube"),
-      nivel: col("Nível no mês passado"), exc: col("Alcançou o status de Criador excepcional"),
+      id: achar(cab, "ID do criador"), usuario: achar(cab, "Nome do criador"), entrou: achar(cab, "Horário de ingresso"), ultima: achar(cab, "Última LIVE"),
+      seg: achar(cab, "Seguidores"), dia: achar(cab, "Diamantes nos últimos 30 dias"), dias: achar(cab, "Dias válidos de início de LIVE"),
+      horas: achar(cab, "Duração da LIVE"), fa: achar(cab, "Diamantes do Fã-clube"), fas: achar(cab, "Fãs ativos do Fã-clube"),
+      nivel: achar(cab, "Nível no mês passado"), exc: achar(cab, "Alcançou o status de Criador excepcional"),
     };
-    const data = (v) => { const x = String(v || "").match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}:\d{2}:\d{2})/); return x ? `${x[1]}-${x[2]}-${x[3]}T${x[4]}Z` : null; };
-    const num = (v, dec) => { if (v == null || v === "" || v === "-") return 0; const n = dec ? parseFloat(String(v).replace(",", ".")) : parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : n; };
     const out = [];
     for (const r of linhas.slice(2)) {
-      const id = String(r[C.id] ?? "").trim();
+      const id = txt(r[C.id]);
       if (!/^\d+$/.test(id)) continue;
       out.push({
-        id, usuario: String(r[C.usuario] || "").trim(), entrou_em: data(r[C.entrou]), ultima_live: data(r[C.ultima]),
-        seguidores: num(r[C.seg]), diamantes: num(r[C.dia]), dias_validos: num(r[C.dias]), horas_live: num(r[C.horas], true),
-        diamantes_fa: num(r[C.fa]), fas_ativos: num(r[C.fas]), nivel: Number.isInteger(r[C.nivel]) ? r[C.nivel] : null,
-        excepcional: String(r[C.exc] || "").trim().toLowerCase() === "sim",
+        id, usuario: txt(r[C.usuario]), entrou_em: data(r[C.entrou]), ultima_live: data(r[C.ultima]),
+        seguidores: num(r[C.seg]), diamantes: num(r[C.dia]), dias_validos: num(r[C.dias]), horas_live: duracao(r[C.horas]),
+        diamantes_fa: num(r[C.fa]), fas_ativos: num(r[C.fas]), nivel: inteiro(r[C.nivel]),
+        excepcional: txt(r[C.exc]).toLowerCase() === "sim",
       });
     }
     if (!out.length) throw new Error("Não encontrei nenhum criador na planilha.");
-    return { exportado, linhas: out };
+    return { exportado, periodo: "30d", inicio: null, fim: null, linhas: out };
   }
   async function importar(file) {
     const erro = $("imp-erro"), ok = $("imp-ok");
@@ -604,21 +656,16 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
     $("imp-drop").querySelector("strong").textContent = "Lendo a planilha…";
     try {
       await carregarSheetJS();
-      // o ID do criador é um número grande: lê como texto para não perder dígitos
-      const wb = window.XLSX.read(await file.arrayBuffer(), { type: "array", raw: true, cellText: true });
+      // tudo como texto, para o ID do criador (número grande) não perder dígitos
+      const wb = window.XLSX.read(await file.arrayBuffer(), { type: "array" });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const linhas = window.XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }).map((r, i) => {
-        if (i < 2) return r;
-        const ref = window.XLSX.utils.encode_cell({ r: i, c: 0 });
-        const cel = ws[ref];
-        const copia = [...r];
-        if (cel) copia[0] = cel.w || String(cel.v);
-        return copia;
-      });
-      const { exportado, linhas: dados } = lerPlanilha(linhas);
-      const { data, error } = await sb.rpc("importar_planilha", { p_linhas: dados, p_exportado: exportado });
+      const linhas = window.XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: null });
+      const p = lerPlanilha(linhas, file.name);
+      const { data, error } = await sb.rpc("importar_dados", { p_linhas: p.linhas, p_exportado: p.exportado, p_periodo: p.periodo, p_inicio: p.inicio, p_fim: p.fim });
       if (error) throw new Error(error.message.includes("PATOX") ? error.message : "Não foi possível salvar os dados. Tente de novo.");
-      ok.innerHTML = `Pronto! <strong>${data.criadores} criadores</strong> atualizados com a planilha exportada em ${quandoTxt(exportado)}.` +
+      const dm = (s) => s.slice(8, 10) + "/" + s.slice(5, 7);
+      ok.innerHTML = `Pronto! <strong>${data.criadores} criadores</strong> atualizados ` +
+        (p.periodo === "mes" ? `com os dados de ${dm(p.inicio)} a ${dm(p.fim)}.` : `com a planilha dos últimos 30 dias exportada em ${quandoTxt(p.exportado)}.`) +
         (data.mais_nova ? "" : " <br>Obs.: essa planilha é mais antiga que a última importada, então só entrou no histórico.") +
         (data.ligados ? ` <br>${data.ligados} conta(s) ligada(s) automaticamente pelo @.` : "");
       ok.hidden = false;
@@ -627,7 +674,7 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
       erro.textContent = err.message || "Não foi possível ler a planilha.";
       erro.hidden = false;
     } finally {
-      $("imp-drop").querySelector("strong").textContent = "Escolher a planilha “Gerenciar criadores” (.xlsx)";
+      $("imp-drop").querySelector("strong").textContent = "Escolher a planilha do TikTok (.xlsx)";
       $("imp-arquivo").value = "";
     }
   }

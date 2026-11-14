@@ -18,7 +18,7 @@
     sb.from("criadores").select("id, usuario, user_id, ativo, ultima_live, seguidores"),
     sb.from("diamantes_mes").select("criador_id, mes, quantidade").in("mes", [M0, M1, M2]),
     sb.from("penalidades").select("criador_id, mes, motivo"),
-    sb.from("desempenho").select("data, exportado_em").order("data", { ascending: false }).limit(1),
+    sb.from("desempenho").select("data, exportado_em, periodo, periodo_inicio, periodo_fim").order("data", { ascending: false }).order("exportado_em", { ascending: false }).limit(1),
   ]);
   if (rl.error || !rl.data?.length) {
     app.innerHTML = `<div class="ranking"><div class="vazio"><h2>Não foi possível carregar as ligas</h2><p>Verifique sua internet e atualize a página.</p><button class="btn btn--primary" onclick="location.reload()">Tentar de novo</button></div></div>`;
@@ -33,6 +33,13 @@
   const eu = [...criadores.values()].find((c) => c.user_id === perfil.id) || null;
   const ultimaData = rult.data?.[0]?.data || null;
   const ultimaExport = rult.data?.[0]?.exportado_em || null;
+  const ult = rult.data?.[0] || {};
+  const mensal = ult.periodo === "mes";
+  const dm2 = (s) => (s ? s.slice(8, 10) + "/" + s.slice(5, 7) : "");
+  // Textos conforme a planilha: mês atual (Dados do criador) ou últimos 30 dias (Gerenciar criadores)
+  const PER = mensal
+    ? { curto: "em " + nomeMes(ult.periodo_inicio), longo: `${nomeMes(ult.periodo_inicio)[0].toUpperCase() + nomeMes(ult.periodo_inicio).slice(1)} · de ${dm2(ult.periodo_inicio)} a ${dm2(ult.periodo_fim)}` }
+    : { curto: "últimos 30 dias", longo: "Últimos 30 dias" };
 
   // Números da última planilha
   let fotos = [];
@@ -43,9 +50,11 @@
   const minhaFoto = eu ? fotos.find((f) => f.criador_id === eu.id) : null;
 
   const primeiroNome = esc(perfil.nome.split(" ")[0]);
-  const quando = ultimaExport
-    ? new Date(ultimaExport).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Bahia" }).replace(",", " às")
-    : null;
+  const quando = mensal
+    ? "dados até " + dm2(ult.periodo_fim)
+    : ultimaExport
+      ? "atualizado em " + new Date(ultimaExport).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "America/Bahia" }).replace(",", " às")
+      : null;
   const horas = (h) => Number(h || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " h";
 
   const ICO_CAL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>';
@@ -85,11 +94,11 @@
 
     const f = minhaFoto || {};
     blocoNumeros = `
-      <div class="numeros" aria-label="Seus números nos últimos 30 dias">
-        <div class="numero-card"><span class="valor-label">Diamantes</span><strong>${numero(f.diamantes)}</strong><small>últimos 30 dias</small></div>
-        <div class="numero-card"><span class="valor-label">Horas de LIVE</span><strong>${horas(f.horas_live)}</strong><small>últimos 30 dias</small></div>
-        <div class="numero-card"><span class="valor-label">Dias válidos de LIVE</span><strong>${numero(f.dias_validos)}</strong><small>últimos 30 dias</small></div>
-        <div class="numero-card"><span class="valor-label">Fãs ativos no Fã-clube</span><strong>${numero(f.fas_ativos)}</strong><small>${numero(f.seguidores ?? eu.seguidores)} seguidores</small></div>
+      <div class="numeros" aria-label="Seus números (${PER.curto})">
+        <div class="numero-card"><span class="valor-label">Diamantes</span><strong>${numero(f.diamantes)}</strong><small>${PER.curto}</small></div>
+        <div class="numero-card"><span class="valor-label">Horas de LIVE</span><strong>${horas(f.horas_live)}</strong><small>${f.transmissoes != null ? numero(f.transmissoes) + " transmissões" : PER.curto}</small></div>
+        <div class="numero-card"><span class="valor-label">Dias válidos de LIVE</span><strong>${numero(f.dias_validos)}</strong><small>${PER.curto}</small></div>
+        <div class="numero-card"><span class="valor-label">Fãs ativos no Fã-clube</span><strong>${numero(f.fas_ativos)}</strong><small>${f.total_fas != null ? numero(f.total_fas) + " fãs no total" : numero(f.seguidores ?? eu.seguidores) + " seguidores"}</small></div>
       </div>`;
 
     const qtd = f.diamantes || 0;
@@ -98,7 +107,7 @@
     const pct = seguinte ? Math.min(100, Math.round(((qtd - ligaProx.min_diamantes) / (seguinte.min_diamantes - ligaProx.min_diamantes)) * 100)) : 100;
     blocoProxima = `
       <div class="card">
-        <div class="card__head"><h2>Rumo à próxima liga</h2><span class="muted">${quando ? "Atualizado em " + quando : "Aguardando a primeira atualização"}</span></div>
+        <div class="card__head"><h2>Rumo à próxima liga</h2><span class="muted">${quando ? quando[0].toUpperCase() + quando.slice(1) : "Aguardando a primeira atualização"}</span></div>
         <div class="card__body proxima">
           <div class="proxima__linha">
             ${seloLiga(ligaProx, 44)}
@@ -109,13 +118,13 @@
             <div class="barra-legenda"><span>${esc(ligaProx.nome)}</span><span>${esc(seguinte.nome)}</span></div>
             <p>Faltam <strong>${numero(seguinte.min_diamantes - qtd)} diamantes</strong> para chegar em <strong>${esc(seguinte.nome)}</strong>. Bora pra LIVE, ${primeiroNome}!</p>`
           : `<p><strong>Você está no topo da lagoa!</strong> Mantenha o ritmo para continuar como ${esc(ligaProx.nome)}.</p>`}
-          <span class="field__hint">Conta o total de diamantes dos últimos 30 dias, como o TikTok mostra. A liga do mês seguinte usa o número do último dia do mês.</span>
+          <span class="field__hint">${mensal ? `Conta os diamantes de ${nomeMes(ult.periodo_inicio)} até ${dm2(ult.periodo_fim)}. No fim do mês, esse total define sua liga de ${nomeMes(mesISO(1, ult.periodo_inicio))}.` : "Conta o total de diamantes dos últimos 30 dias, como o TikTok mostra. A liga do mês seguinte usa o número do último dia do mês."}</span>
         </div>
       </div>`;
 
     blocoEvolucao = `
       <div class="card">
-        <div class="card__head"><h2>Sua evolução</h2><span class="muted">Diamantes dos últimos 30 dias, dia a dia</span></div>
+        <div class="card__head"><h2>Sua evolução</h2><span class="muted">${mensal ? "Diamantes acumulados no mês, dia a dia" : "Diamantes dos últimos 30 dias, dia a dia"}</span></div>
         <div class="card__body" data-evolucao><span class="muted">Carregando…</span></div>
       </div>`;
   } else if (!isAdmin) {
@@ -137,7 +146,7 @@
         <div class="card__head">
           <div>
             <h2>Ranking da ninhada</h2>
-            <span class="muted">Últimos 30 dias${quando ? " · atualizado em " + quando : ""}</span>
+            <span class="muted">${PER.longo}${quando && !mensal ? " · " + quando : ""}</span>
           </div>
           <div class="meses" role="group" aria-label="Ordenar ranking por">
             <button type="button" data-met="diamantes" aria-pressed="true">Diamantes</button>
@@ -221,10 +230,11 @@
   // ---------- Evolução (gráfico) ----------
   if (eu) {
     const alvo = app.querySelector("[data-evolucao]");
-    const { data } = await sb.from("desempenho").select("data, diamantes").eq("criador_id", eu.id).order("data").limit(400);
-    const pts = (data || []).slice(-45);
+    const { data } = await sb.from("desempenho").select("data, diamantes, periodo, periodo_inicio").eq("criador_id", eu.id).order("data").limit(400);
+    // só compara números do mesmo tipo (mesmo mês, ou série de 30 dias)
+    const pts = (data || []).filter((p) => (mensal ? p.periodo === "mes" && p.periodo_inicio === ult.periodo_inicio : p.periodo !== "mes")).slice(-45);
     if (pts.length < 2) {
-      alvo.innerHTML = `<p class="muted">O gráfico aparece a partir da segunda atualização da planilha. Volte amanhã para ver sua linha subindo!</p>`;
+      alvo.innerHTML = `<p class="muted">O gráfico aparece a partir da segunda atualização${mensal ? " do mês" : ""}. Volte amanhã para ver sua linha subindo!</p>`;
     } else {
       const W = 560, H = 200, pl = 8, pr = 8, pt = 16, pb = 26;
       const vmax = Math.max(...pts.map((p) => p.diamantes), 1);
