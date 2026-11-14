@@ -83,9 +83,12 @@
     }
     btn.disabled = true; btn.textContent = "Cadastrando…";
     try {
-      await chamar({ acao: "criar", nome, login, senha, papel });
+      await chamar({ acao: "criar", nome, login, senha, papel, criador_id: $("n-criador").value || undefined });
       mostrarMensagem(nome, login, senha);
       $("form-novo").reset();
+      $("n-criador").value = "";
+      $("n-dica-tt").hidden = true;
+      carregarRanking();
       $("n-senha").value = gerarSenha();
       toast(`${nome.split(" ")[0]} foi cadastrado(a)!`);
       carregarStreamers();
@@ -436,97 +439,203 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
     }
   });
 
-  // ---------- Ranking: diamantes, ligas e aviso ----------
-  let ligas = [], linhasRank = [];
-  const SIT = { avancou: '<span class="chip chip--ok">↑ Avançou</span>', manteve: '<span class="chip">= Manteve</span>', caiu: '<span class="chip chip--live">↓ Caiu</span>' };
-  const soDigitos = (v) => Number(String(v || "").replace(/\D/g, "")) || 0;
-
-  $("r-mes").value = mesISO(0).slice(0, 7);
-  $("r-mes").max = mesISO(0).slice(0, 7);
-  $("r-mes").addEventListener("change", () => { if ($("r-mes").value) carregarRanking(); });
+  // ---------- Ranking: planilha do TikTok, criadores, ligas e aviso ----------
+  let ligas = [], criadoresAdm = [], perfisStreamers = [];
+  const M0 = mesISO(0), M1 = mesISO(-1), M2 = mesISO(-2);
+  const horas = (h) => Number(h || 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + " h";
+  const quandoTxt = (iso) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "America/Bahia" }).replace(",", " às");
 
   async function carregarRanking() {
-    const X = $("r-mes").value + "-01", Xa = mesISO(-1, X), Xp = mesISO(1, X);
-    $("r-lista").innerHTML = '<div class="card__body muted">Carregando…</div>';
-    $("r-status").textContent = "";
-    const [l, p, d, c] = await Promise.all([
+    const [l, c, p, d, f, pen, cfg] = await Promise.all([
       sb.from("ligas").select("*").order("min_diamantes"),
-      sb.from("profiles").select("id, nome, ativo").eq("papel", "streamer").order("nome"),
-      sb.from("diamantes").select("*").in("mes", [X, Xa]),
-      sb.from("config").select("*").eq("chave", "aviso_ranking").maybeSingle(),
+      sb.from("criadores").select("*").order("usuario"),
+      sb.from("profiles").select("id, nome, login").eq("papel", "streamer").order("nome"),
+      sb.from("diamantes_mes").select("*").in("mes", [M0, M1, M2]),
+      sb.from("desempenho").select("*").order("data", { ascending: false }).limit(2000),
+      sb.from("penalidades").select("*"),
+      sb.from("config").select("*"),
     ]);
     ligas = l.data || [];
     renderLigasEdit();
-    if (c.data) $("cfg-aviso").value = c.data.valor;
-    const dm = new Map((d.data || []).map((r) => [r.user_id + "|" + r.mes, r]));
-    linhasRank = (p.data || []).map((u) => {
-      const atual = dm.get(u.id + "|" + X), ant = dm.get(u.id + "|" + Xa);
-      return { u, qtd: atual?.quantidade ?? null, ant: ant?.quantidade || 0, sem: !!atual?.sem_premio, motivo: atual?.motivo || "", orig: JSON.stringify([atual?.quantidade ?? null, !!atual?.sem_premio, atual?.motivo || ""]) };
-    });
-    if (!linhasRank.length) { $("r-lista").innerHTML = '<div class="card__body muted">Cadastre streamers na aba “Streamers” para lançar diamantes.</div>'; return; }
-    $("r-lista").innerHTML = `
+    const conf = Object.fromEntries((cfg.data || []).map((r) => [r.chave, r.valor]));
+    if (conf.aviso_ranking != null) $("cfg-aviso").value = conf.aviso_ranking;
+    if (conf.ultima_importacao) $("imp-ultima").textContent = "Última planilha: exportada em " + quandoTxt(conf.ultima_importacao) + " (horário da Bahia).";
+
+    perfisStreamers = p.data || [];
+    const dm = new Map((d.data || []).map((r) => [r.criador_id + "|" + r.mes, r.quantidade]));
+    const pn = new Map((pen.data || []).map((r) => [r.criador_id + "|" + r.mes, r]));
+    const ultData = f.data?.[0]?.data;
+    const foto = new Map((f.data || []).filter((x) => x.data === ultData).map((x) => [x.criador_id, x]));
+    criadoresAdm = (c.data || []).map((cr) => ({ ...cr, foto: foto.get(cr.id) || {}, dm0: dm.get(cr.id + "|" + M0) || 0, dm1: dm.get(cr.id + "|" + M1) || 0, dm2: dm.get(cr.id + "|" + M2) || 0, pen0: pn.get(cr.id + "|" + M0), pen1: pn.get(cr.id + "|" + M1) }))
+      .sort((a, b) => (b.ativo - a.ativo) || ((b.foto.diamantes || 0) - (a.foto.diamantes || 0)));
+    renderCriadores();
+  }
+
+  function renderCriadores() {
+    const alvo = $("cr-lista");
+    if (!criadoresAdm.length) { alvo.innerHTML = '<div class="card__body muted">Importe a planilha do TikTok para ver os criadores aqui.</div>'; $("cr-resumo").textContent = ""; return; }
+    const ligados = new Set(criadoresAdm.map((c) => c.user_id).filter(Boolean));
+    let pagarAgora = 0, projetado = 0;
+    const linhas = criadoresAdm.map((c) => {
+      const agora = situacao(ligas, c.dm1, c.dm2, !!c.pen1);
+      const proj = situacao(ligas, c.dm0, c.dm1, !!c.pen0);
+      if (c.ativo) { pagarAgora += agora.premio; projetado += proj.premio; }
+      const conta = perfisStreamers.find((p) => p.id === c.user_id);
+      const opcoes = perfisStreamers.filter((p) => p.id === c.user_id || !ligados.has(p.id));
+      return `<tr data-c="${esc(c.id)}">
+        <td><span class="criador-tt">@${esc(c.usuario)}</span>${c.ativo ? "" : ' <span class="chip chip--live">Saiu da agência</span>'}</td>
+        <td><strong>${numero(c.foto.diamantes)}</strong></td>
+        <td>${horas(c.foto.horas_live)}</td>
+        <td>${numero(c.foto.dias_validos)}</td>
+        <td><span class="lanc-liga">${seloLiga(proj.liga, 26)}${esc(proj.liga.nome)}</span></td>
+        <td>${moeda(agora.premio)}${c.pen1 ? ' <span class="muted">(cancelada)</span>' : ""}</td>
+        <td>
+          <select class="select" data-ligar style="min-height:38px;padding:.35rem .6rem;font-size:.9rem;max-width:190px" aria-label="Conta no site de @${esc(c.usuario)}">
+            <option value="">— sem conta —</option>
+            ${opcoes.map((p) => `<option value="${p.id}" ${p.id === c.user_id ? "selected" : ""}>${esc(p.nome)} (${esc(p.login)})</option>`).join("")}
+          </select>
+          ${conta ? "" : `<button class="btn btn--outline btn--sm" type="button" data-criar style="margin-top:.35rem">Criar acesso</button>`}
+        </td>
+        <td><label class="check" title="${c.pen0 ? esc(c.pen0.motivo) : ""}"><input type="checkbox" data-pen ${c.pen0 ? "checked" : ""}> ${c.pen0 ? "Sim" : "Não"}</label></td>
+      </tr>`;
+    }).join("");
+    $("cr-resumo").textContent = `${criadoresAdm.filter((c) => c.ativo).length} criadores · ${ligados.size} com acesso à Área do Streamer`;
+    alvo.innerHTML = `
+      <div class="card__body" style="display:flex;flex-wrap:wrap;gap:.75rem 2rem;border-bottom:1px solid var(--lilac-100)">
+        <div><span class="valor-label">Premiações a pagar em ${nomeMes(M0)}</span><strong style="font-size:1.25rem">${moeda(pagarAgora)}</strong> <span class="muted">(diamantes de ${nomeMes(M1)})</span></div>
+        <div><span class="valor-label">Projeção para ${nomeMes(mesISO(1))}</span><strong style="font-size:1.25rem">${moeda(projetado)}</strong> <span class="muted">(se ${nomeMes(M0)} fechasse hoje)</span></div>
+      </div>
       <div style="overflow-x:auto">
       <table class="tabela">
-        <thead><tr><th>Streamer</th><th>Diamantes em ${nomeMes(X)}</th><th>Liga em ${nomeMes(Xp)}</th><th>Situação</th><th>Premiação em ${nomeMes(Xp)}</th><th>Perdeu premiação?</th></tr></thead>
-        <tbody>
-          ${linhasRank.map((r, i) => `<tr data-i="${i}">
-            <td><strong>${esc(r.u.nome)}</strong>${r.u.ativo ? "" : ' <span class="chip chip--live">Pausado</span>'}</td>
-            <td><input class="input lanc-input" inputmode="numeric" data-q value="${r.qtd == null ? "" : numero(r.qtd)}" placeholder="0" aria-label="Diamantes de ${esc(r.u.nome)}"></td>
-            <td data-liga></td><td data-sit></td><td data-premio></td>
-            <td><label class="check"><input type="checkbox" data-sem ${r.sem ? "checked" : ""}> Sim</label>
-              <input class="input" data-motivo value="${esc(r.motivo)}" placeholder="Motivo (ex.: banimento)" style="margin-top:.4rem;min-height:38px;padding:.4rem .7rem" ${r.sem ? "" : "hidden"}></td>
-          </tr>`).join("")}
-        </tbody>
-        <tfoot><tr><td colspan="4">Total de premiações em ${nomeMes(Xp)}</td><td data-total colspan="2"></td></tr></tfoot>
-      </table></div>`;
-    linhasRank.forEach((_, i) => atualizarLinha(i));
-    atualizarTotal();
+        <thead><tr><th>TikTok</th><th>Diamantes (30 dias)</th><th>Horas de LIVE</th><th>Dias válidos</th><th>Liga em ${nomeMes(mesISO(1))}*</th><th>Prêmio de ${nomeMes(M0)}</th><th>Conta no site</th><th>Perdeu prêmio por ${nomeMes(M0)}?</th></tr></thead>
+        <tbody>${linhas}</tbody>
+      </table></div>
+      <div class="card__body muted" style="font-size:.85rem;border-top:1px solid var(--lilac-100)">* Projeção com os diamantes dos últimos 30 dias. “Perdeu prêmio” zera a premiação que seria paga no mês seguinte (ex.: banimento de mais de 24h).</div>`;
   }
 
-  function atualizarLinha(i) {
-    const r = linhasRank[i], tr = $("r-lista").querySelector(`tr[data-i="${i}"]`);
-    if (!ligas.length || !tr) return;
-    const s = situacao(ligas, r.qtd || 0, r.ant, r.sem);
-    tr.querySelector("[data-liga]").innerHTML = `<span class="lanc-liga">${seloLiga(s.liga, 28)}${esc(s.liga.nome)}</span>`;
-    tr.querySelector("[data-sit]").innerHTML = SIT[s.tipo];
-    tr.querySelector("[data-premio]").innerHTML = `<strong>${moeda(s.premio)}</strong>${r.sem ? ' <span class="muted">(cancelada)</span>' : ""}`;
-    r.premio = s.premio;
-  }
-  function atualizarTotal() {
-    const t = linhasRank.reduce((a, r) => a + (r.premio || 0), 0);
-    const el = $("r-lista").querySelector("[data-total]");
-    if (el) el.textContent = moeda(t);
-  }
-
-  $("r-lista").addEventListener("input", (e) => {
-    const tr = e.target.closest("tr[data-i]");
+  $("cr-lista").addEventListener("change", async (e) => {
+    const tr = e.target.closest("tr[data-c]");
     if (!tr) return;
-    const i = Number(tr.dataset.i), r = linhasRank[i];
-    if (e.target.matches("[data-q]")) {
-      const v = e.target.value.trim();
-      r.qtd = v === "" ? null : soDigitos(v);
-      if (v !== "") e.target.value = numero(r.qtd);
-    }
-    if (e.target.matches("[data-sem]")) { r.sem = e.target.checked; tr.querySelector("[data-motivo]").hidden = !r.sem; }
-    if (e.target.matches("[data-motivo]")) r.motivo = e.target.value;
-    atualizarLinha(i);
-    atualizarTotal();
-    $("r-status").textContent = "Alterações não salvas";
+    const c = criadoresAdm.find((x) => x.id === tr.dataset.c);
+    try {
+      if (e.target.matches("[data-ligar]")) {
+        const { error } = await sb.from("criadores").update({ user_id: e.target.value || null }).eq("id", c.id);
+        if (error) throw error;
+        toast(e.target.value ? `@${c.usuario} ligado à conta.` : `@${c.usuario} desligado da conta.`);
+      }
+      if (e.target.matches("[data-pen]")) {
+        if (e.target.checked) {
+          const motivo = await confirmar({ titulo: `@${c.usuario} perde a premiação?`, texto: `A premiação que seria paga em ${nomeMes(mesISO(1))} fica zerada. O motivo aparece só para a pessoa.`, botao: "Confirmar", perigo: true, campo: { label: "Motivo", valor: "Banimento de mais de 24h" } });
+          if (motivo == null) { e.target.checked = false; return; }
+          const { error } = await sb.from("penalidades").upsert({ criador_id: c.id, mes: M0, motivo: motivo.trim() });
+          if (error) throw error;
+        } else {
+          const { error } = await sb.from("penalidades").delete().eq("criador_id", c.id).eq("mes", M0);
+          if (error) throw error;
+        }
+        toast("Premiação atualizada.");
+      }
+      carregarRanking();
+    } catch (err) { toast("Não foi possível salvar. Tente de novo.", true); carregarRanking(); }
   });
 
-  $("r-salvar").addEventListener("click", async () => {
-    const X = $("r-mes").value + "-01";
-    const mudou = linhasRank.filter((r) => JSON.stringify([r.qtd, r.sem, r.sem ? r.motivo : ""]) !== JSON.stringify([JSON.parse(r.orig)[0], JSON.parse(r.orig)[1], JSON.parse(r.orig)[1] ? JSON.parse(r.orig)[2] : ""]));
-    if (!mudou.length) { toast("Nada novo para salvar."); return; }
-    const btn = $("r-salvar");
-    btn.disabled = true; btn.textContent = "Salvando…";
-    const linhas = mudou.map((r) => ({ user_id: r.u.id, mes: X, quantidade: r.qtd || 0, sem_premio: r.sem, motivo: r.sem ? r.motivo.trim() : "", atualizado_em: new Date().toISOString() }));
-    const { error } = await sb.from("diamantes").upsert(linhas, { onConflict: "user_id,mes" });
-    btn.disabled = false; btn.textContent = "Salvar diamantes";
-    if (error) { toast("Não foi possível salvar. Tente de novo.", true); return; }
-    toast(`Diamantes de ${nomeMes(X)} salvos!`);
-    carregarRanking();
+  $("cr-lista").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-criar]");
+    if (!b) return;
+    const c = criadoresAdm.find((x) => x.id === b.closest("tr").dataset.c);
+    abrirAba("streamers");
+    $("n-nome").value = "";
+    $("n-login").value = c.usuario;
+    $("n-criador").value = c.id;
+    $("n-papel").value = "streamer";
+    $("n-dica-tt").textContent = `Esta conta será ligada ao TikTok @${c.usuario}.`;
+    $("n-dica-tt").hidden = false;
+    $("form-novo").scrollIntoView({ behavior: "smooth", block: "start" });
+    setTimeout(() => $("n-nome").focus(), 300);
   });
+
+  // Importação da planilha (lida aqui no navegador)
+  function carregarSheetJS() {
+    if (window.XLSX) return Promise.resolve();
+    return new Promise((ok, falha) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+      s.onload = ok; s.onerror = () => falha(new Error("Não foi possível carregar o leitor de planilhas. Verifique a internet."));
+      document.head.appendChild(s);
+    });
+  }
+  function lerPlanilha(linhas) {
+    const topo = String((linhas[0] || [])[0] || "");
+    const m = topo.match(/(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2}:\d{2})/);
+    if (!m) throw new Error("Não encontrei a data de exportação. Use a planilha “Gerenciar criadores” do TikTok, sem editar.");
+    const exportado = `${m[1]}-${m[2]}-${m[3]}T${m[4]}Z`;
+    const cab = (linhas[1] || []).map((h) => String(h || "").trim());
+    const col = (nome) => {
+      const i = cab.findIndex((h) => h.toLowerCase().startsWith(nome.toLowerCase()));
+      if (i < 0) throw new Error(`A planilha não tem a coluna “${nome}”.`);
+      return i;
+    };
+    const C = {
+      id: col("ID do criador"), usuario: col("Nome do criador"), entrou: col("Horário de ingresso"), ultima: col("Última LIVE"),
+      seg: col("Seguidores"), dia: col("Diamantes nos últimos 30 dias"), dias: col("Dias válidos de início de LIVE"),
+      horas: col("Duração da LIVE"), fa: col("Diamantes do Fã-clube"), fas: col("Fãs ativos do Fã-clube"),
+      nivel: col("Nível no mês passado"), exc: col("Alcançou o status de Criador excepcional"),
+    };
+    const data = (v) => { const x = String(v || "").match(/(\d{4}):(\d{2}):(\d{2}) (\d{2}:\d{2}:\d{2})/); return x ? `${x[1]}-${x[2]}-${x[3]}T${x[4]}Z` : null; };
+    const num = (v, dec) => { if (v == null || v === "" || v === "-") return 0; const n = dec ? parseFloat(String(v).replace(",", ".")) : parseInt(String(v).replace(/\D/g, ""), 10); return isNaN(n) ? 0 : n; };
+    const out = [];
+    for (const r of linhas.slice(2)) {
+      const id = String(r[C.id] ?? "").trim();
+      if (!/^\d+$/.test(id)) continue;
+      out.push({
+        id, usuario: String(r[C.usuario] || "").trim(), entrou_em: data(r[C.entrou]), ultima_live: data(r[C.ultima]),
+        seguidores: num(r[C.seg]), diamantes: num(r[C.dia]), dias_validos: num(r[C.dias]), horas_live: num(r[C.horas], true),
+        diamantes_fa: num(r[C.fa]), fas_ativos: num(r[C.fas]), nivel: Number.isInteger(r[C.nivel]) ? r[C.nivel] : null,
+        excepcional: String(r[C.exc] || "").trim().toLowerCase() === "sim",
+      });
+    }
+    if (!out.length) throw new Error("Não encontrei nenhum criador na planilha.");
+    return { exportado, linhas: out };
+  }
+  async function importar(file) {
+    const erro = $("imp-erro"), ok = $("imp-ok");
+    erro.hidden = true; ok.hidden = true;
+    if (!file) return;
+    $("imp-drop").querySelector("strong").textContent = "Lendo a planilha…";
+    try {
+      await carregarSheetJS();
+      // o ID do criador é um número grande: lê como texto para não perder dígitos
+      const wb = window.XLSX.read(await file.arrayBuffer(), { type: "array", raw: true, cellText: true });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const linhas = window.XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null }).map((r, i) => {
+        if (i < 2) return r;
+        const ref = window.XLSX.utils.encode_cell({ r: i, c: 0 });
+        const cel = ws[ref];
+        const copia = [...r];
+        if (cel) copia[0] = cel.w || String(cel.v);
+        return copia;
+      });
+      const { exportado, linhas: dados } = lerPlanilha(linhas);
+      const { data, error } = await sb.rpc("importar_planilha", { p_linhas: dados, p_exportado: exportado });
+      if (error) throw new Error(error.message.includes("PATOX") ? error.message : "Não foi possível salvar os dados. Tente de novo.");
+      ok.innerHTML = `Pronto! <strong>${data.criadores} criadores</strong> atualizados com a planilha exportada em ${quandoTxt(exportado)}.` +
+        (data.mais_nova ? "" : " <br>Obs.: essa planilha é mais antiga que a última importada, então só entrou no histórico.") +
+        (data.ligados ? ` <br>${data.ligados} conta(s) ligada(s) automaticamente pelo @.` : "");
+      ok.hidden = false;
+      carregarRanking();
+    } catch (err) {
+      erro.textContent = err.message || "Não foi possível ler a planilha.";
+      erro.hidden = false;
+    } finally {
+      $("imp-drop").querySelector("strong").textContent = "Escolher a planilha “Gerenciar criadores” (.xlsx)";
+      $("imp-arquivo").value = "";
+    }
+  }
+  $("imp-arquivo").addEventListener("change", (e) => importar(e.target.files[0]));
+  const dropImp = $("imp-drop");
+  ["dragenter", "dragover"].forEach((t) => dropImp.addEventListener(t, (e) => { e.preventDefault(); dropImp.classList.add("is-over"); }));
+  ["dragleave", "drop"].forEach((t) => dropImp.addEventListener(t, (e) => { e.preventDefault(); dropImp.classList.remove("is-over"); }));
+  dropImp.addEventListener("drop", (e) => importar(e.dataTransfer.files[0]));
 
   function renderLigasEdit() {
     $("l-tabela").innerHTML = `

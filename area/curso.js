@@ -51,13 +51,17 @@
     if (isAdmin) return;
     const { mesISO, situacao, seloLiga, nomeMes } = window.PATOX;
     const M1 = mesISO(-1), M2 = mesISO(-2);
-    const [l, d] = await Promise.all([
+    const [l, c] = await Promise.all([
       sb.from("ligas").select("*"),
-      sb.from("diamantes").select("mes, quantidade, sem_premio").eq("user_id", perfil.id).in("mes", [M1, M2]),
+      sb.from("criadores").select("id").eq("user_id", perfil.id).maybeSingle(),
     ]);
-    if (l.error || !l.data?.length) return;
-    const q = (m) => (d.data || []).find((r) => r.mes === m);
-    const sit = situacao(l.data, q(M1)?.quantidade, q(M2)?.quantidade, q(M1)?.sem_premio);
+    if (l.error || !l.data?.length || !c.data) return;
+    const [d, pn] = await Promise.all([
+      sb.from("diamantes_mes").select("mes, quantidade").eq("criador_id", c.data.id).in("mes", [M1, M2]),
+      sb.from("penalidades").select("mes").eq("criador_id", c.data.id).eq("mes", M1),
+    ]);
+    const q = (m) => (d.data || []).find((r) => r.mes === m)?.quantidade || 0;
+    const sit = situacao(l.data, q(M1), q(M2), !!(pn.data || []).length);
     const alvo = app.querySelector(".boas-vindas");
     if (!alvo) return;
     const a = document.createElement("a");
