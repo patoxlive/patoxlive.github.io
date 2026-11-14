@@ -1,6 +1,6 @@
 /* PATOX LIVE — Painel da equipe */
 (async function () {
-  const { sb, ICONES, SUPABASE_URL, SUPABASE_KEY, esc, duracaoTexto, toast, exigirLogin, montarMenu } = window.PATOX;
+  const { sb, ICONES, SUPABASE_URL, SUPABASE_KEY, esc, duracaoTexto, toast, exigirLogin, montarMenu, mesISO, nomeMes, numero, moeda, ligaPara, situacao, seloLiga } = window.PATOX;
   const auth = await exigirLogin({ admin: true });
   if (!auth) return;
   const { perfil } = auth;
@@ -12,7 +12,7 @@
   const AREA_URL = new URL("./", location.href).href;
 
   // ---------- Abas ----------
-  const abas = { streamers: $("t-streamers"), aulas: $("t-aulas") };
+  const abas = { streamers: $("t-streamers"), aulas: $("t-aulas"), ranking: $("t-ranking") };
   function abrirAba(nome) {
     for (const [k, b] of Object.entries(abas)) {
       const on = k === nome;
@@ -23,6 +23,7 @@
   }
   abas.streamers.addEventListener("click", () => abrirAba("streamers"));
   abas.aulas.addEventListener("click", () => abrirAba("aulas"));
+  abas.ranking.addEventListener("click", () => abrirAba("ranking"));
   try { const a = localStorage.getItem("patox-admin-aba"); if (a && abas[a]) abrirAba(a); } catch (_) {}
 
   // ---------- Confirmação ----------
@@ -435,6 +436,141 @@ As aulas vão liberando uma por uma: é só assistir até o final para destravar
     }
   });
 
+  // ---------- Ranking: diamantes, ligas e aviso ----------
+  let ligas = [], linhasRank = [];
+  const SIT = { avancou: '<span class="chip chip--ok">↑ Avançou</span>', manteve: '<span class="chip">= Manteve</span>', caiu: '<span class="chip chip--live">↓ Caiu</span>' };
+  const soDigitos = (v) => Number(String(v || "").replace(/\D/g, "")) || 0;
+
+  $("r-mes").value = mesISO(0).slice(0, 7);
+  $("r-mes").max = mesISO(0).slice(0, 7);
+  $("r-mes").addEventListener("change", () => { if ($("r-mes").value) carregarRanking(); });
+
+  async function carregarRanking() {
+    const X = $("r-mes").value + "-01", Xa = mesISO(-1, X), Xp = mesISO(1, X);
+    $("r-lista").innerHTML = '<div class="card__body muted">Carregando…</div>';
+    $("r-status").textContent = "";
+    const [l, p, d, c] = await Promise.all([
+      sb.from("ligas").select("*").order("min_diamantes"),
+      sb.from("profiles").select("id, nome, ativo").eq("papel", "streamer").order("nome"),
+      sb.from("diamantes").select("*").in("mes", [X, Xa]),
+      sb.from("config").select("*").eq("chave", "aviso_ranking").maybeSingle(),
+    ]);
+    ligas = l.data || [];
+    renderLigasEdit();
+    if (c.data) $("cfg-aviso").value = c.data.valor;
+    const dm = new Map((d.data || []).map((r) => [r.user_id + "|" + r.mes, r]));
+    linhasRank = (p.data || []).map((u) => {
+      const atual = dm.get(u.id + "|" + X), ant = dm.get(u.id + "|" + Xa);
+      return { u, qtd: atual?.quantidade ?? null, ant: ant?.quantidade || 0, sem: !!atual?.sem_premio, motivo: atual?.motivo || "", orig: JSON.stringify([atual?.quantidade ?? null, !!atual?.sem_premio, atual?.motivo || ""]) };
+    });
+    if (!linhasRank.length) { $("r-lista").innerHTML = '<div class="card__body muted">Cadastre streamers na aba “Streamers” para lançar diamantes.</div>'; return; }
+    $("r-lista").innerHTML = `
+      <div style="overflow-x:auto">
+      <table class="tabela">
+        <thead><tr><th>Streamer</th><th>Diamantes em ${nomeMes(X)}</th><th>Liga em ${nomeMes(Xp)}</th><th>Situação</th><th>Premiação em ${nomeMes(Xp)}</th><th>Perdeu premiação?</th></tr></thead>
+        <tbody>
+          ${linhasRank.map((r, i) => `<tr data-i="${i}">
+            <td><strong>${esc(r.u.nome)}</strong>${r.u.ativo ? "" : ' <span class="chip chip--live">Pausado</span>'}</td>
+            <td><input class="input lanc-input" inputmode="numeric" data-q value="${r.qtd == null ? "" : numero(r.qtd)}" placeholder="0" aria-label="Diamantes de ${esc(r.u.nome)}"></td>
+            <td data-liga></td><td data-sit></td><td data-premio></td>
+            <td><label class="check"><input type="checkbox" data-sem ${r.sem ? "checked" : ""}> Sim</label>
+              <input class="input" data-motivo value="${esc(r.motivo)}" placeholder="Motivo (ex.: banimento)" style="margin-top:.4rem;min-height:38px;padding:.4rem .7rem" ${r.sem ? "" : "hidden"}></td>
+          </tr>`).join("")}
+        </tbody>
+        <tfoot><tr><td colspan="4">Total de premiações em ${nomeMes(Xp)}</td><td data-total colspan="2"></td></tr></tfoot>
+      </table></div>`;
+    linhasRank.forEach((_, i) => atualizarLinha(i));
+    atualizarTotal();
+  }
+
+  function atualizarLinha(i) {
+    const r = linhasRank[i], tr = $("r-lista").querySelector(`tr[data-i="${i}"]`);
+    if (!ligas.length || !tr) return;
+    const s = situacao(ligas, r.qtd || 0, r.ant, r.sem);
+    tr.querySelector("[data-liga]").innerHTML = `<span class="lanc-liga">${seloLiga(s.liga, 28)}${esc(s.liga.nome)}</span>`;
+    tr.querySelector("[data-sit]").innerHTML = SIT[s.tipo];
+    tr.querySelector("[data-premio]").innerHTML = `<strong>${moeda(s.premio)}</strong>${r.sem ? ' <span class="muted">(cancelada)</span>' : ""}`;
+    r.premio = s.premio;
+  }
+  function atualizarTotal() {
+    const t = linhasRank.reduce((a, r) => a + (r.premio || 0), 0);
+    const el = $("r-lista").querySelector("[data-total]");
+    if (el) el.textContent = moeda(t);
+  }
+
+  $("r-lista").addEventListener("input", (e) => {
+    const tr = e.target.closest("tr[data-i]");
+    if (!tr) return;
+    const i = Number(tr.dataset.i), r = linhasRank[i];
+    if (e.target.matches("[data-q]")) {
+      const v = e.target.value.trim();
+      r.qtd = v === "" ? null : soDigitos(v);
+      if (v !== "") e.target.value = numero(r.qtd);
+    }
+    if (e.target.matches("[data-sem]")) { r.sem = e.target.checked; tr.querySelector("[data-motivo]").hidden = !r.sem; }
+    if (e.target.matches("[data-motivo]")) r.motivo = e.target.value;
+    atualizarLinha(i);
+    atualizarTotal();
+    $("r-status").textContent = "Alterações não salvas";
+  });
+
+  $("r-salvar").addEventListener("click", async () => {
+    const X = $("r-mes").value + "-01";
+    const mudou = linhasRank.filter((r) => JSON.stringify([r.qtd, r.sem, r.sem ? r.motivo : ""]) !== JSON.stringify([JSON.parse(r.orig)[0], JSON.parse(r.orig)[1], JSON.parse(r.orig)[1] ? JSON.parse(r.orig)[2] : ""]));
+    if (!mudou.length) { toast("Nada novo para salvar."); return; }
+    const btn = $("r-salvar");
+    btn.disabled = true; btn.textContent = "Salvando…";
+    const linhas = mudou.map((r) => ({ user_id: r.u.id, mes: X, quantidade: r.qtd || 0, sem_premio: r.sem, motivo: r.sem ? r.motivo.trim() : "", atualizado_em: new Date().toISOString() }));
+    const { error } = await sb.from("diamantes").upsert(linhas, { onConflict: "user_id,mes" });
+    btn.disabled = false; btn.textContent = "Salvar diamantes";
+    if (error) { toast("Não foi possível salvar. Tente de novo.", true); return; }
+    toast(`Diamantes de ${nomeMes(X)} salvos!`);
+    carregarRanking();
+  });
+
+  function renderLigasEdit() {
+    $("l-tabela").innerHTML = `
+      <thead><tr><th></th><th>Nome da liga</th><th>A partir de (diamantes)</th><th>Avançou (R$)</th><th>Manteve (R$)</th><th>Cor</th></tr></thead>
+      <tbody>${ligas.map((l, i) => `<tr data-l="${i}">
+        <td>${seloLiga(l, 36)}</td>
+        <td><input class="input" data-f="nome" value="${esc(l.nome)}" aria-label="Nome da liga ${i + 1}"></td>
+        <td><input class="input" data-f="min_diamantes" inputmode="numeric" value="${numero(l.min_diamantes)}" ${i === 0 ? "readonly title='A primeira liga sempre começa no zero'" : ""} aria-label="Mínimo de diamantes"></td>
+        <td><input class="input" data-f="valor_avancou" inputmode="decimal" value="${Number(l.valor_avancou).toFixed(2).replace(".", ",")}" aria-label="Valor avançou"></td>
+        <td><input class="input" data-f="valor_manteve" inputmode="decimal" value="${Number(l.valor_manteve).toFixed(2).replace(".", ",")}" aria-label="Valor manteve"></td>
+        <td><input type="color" data-f="cor" value="${esc(l.cor)}" aria-label="Cor do selo" style="width:44px;height:40px;border:0;background:none;cursor:pointer"></td>
+      </tr>`).join("")}</tbody>`;
+  }
+  $("l-tabela").addEventListener("input", (e) => {
+    const tr = e.target.closest("tr[data-l]");
+    if (!tr) return;
+    const l = ligas[Number(tr.dataset.l)];
+    if (e.target.dataset.f === "cor") { l.cor = e.target.value; tr.querySelector("td").innerHTML = seloLiga(l, 36); }
+  });
+  $("l-salvar").addEventListener("click", async () => {
+    const reais = (v) => Number(String(v).replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".")) || 0;
+    const novas = [...$("l-tabela").querySelectorAll("tr[data-l]")].map((tr, i) => {
+      const g = (f) => tr.querySelector(`[data-f="${f}"]`).value;
+      return { id: ligas[i].id, nome: g("nome").trim(), min_diamantes: i === 0 ? 0 : soDigitos(g("min_diamantes")), valor_avancou: reais(g("valor_avancou")), valor_manteve: reais(g("valor_manteve")), cor: g("cor") };
+    });
+    for (let i = 0; i < novas.length; i++) {
+      if (!novas[i].nome) { toast(`Dê um nome para a liga ${i + 1}.`, true); return; }
+      if (i > 0 && novas[i].min_diamantes <= novas[i - 1].min_diamantes) { toast(`A faixa de “${novas[i].nome}” precisa começar acima de “${novas[i - 1].nome}”.`, true); return; }
+    }
+    const btn = $("l-salvar");
+    btn.disabled = true;
+    const res = await Promise.all(novas.map(({ id, ...d }, i) => sb.from("ligas").update({ ...d, ordem: i + 1 }).eq("id", id)));
+    btn.disabled = false;
+    if (res.some((r) => r.error)) { toast("Não foi possível salvar as ligas.", true); return; }
+    toast("Ligas salvas!");
+    carregarRanking();
+  });
+
+  $("cfg-salvar").addEventListener("click", async () => {
+    const { error } = await sb.from("config").upsert({ chave: "aviso_ranking", valor: $("cfg-aviso").value.trim() });
+    toast(error ? "Não foi possível salvar o aviso." : "Aviso salvo!", !!error);
+  });
+
   carregarStreamers();
   carregarAulas();
+  carregarRanking();
 })();

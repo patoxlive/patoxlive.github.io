@@ -168,5 +168,68 @@
     dlg.showModal();
   }
 
-  window.PATOX = { sb, ICONES, WHATSAPP, SUPABASE_URL, SUPABASE_KEY, loginParaEmail, esc, tempo, duracaoTexto, iniciais, toast, exigirLogin, montarMenu };
+  // ---------- Ligas da Ninhada ----------
+  const TZ = "America/Bahia";
+
+  // "2026-11-01" do mês atual (fuso da Bahia), com deslocamento em meses
+  function mesISO(desloc = 0, base) {
+    let y, m;
+    if (base) { [y, m] = base.split("-").map(Number); }
+    else {
+      const p = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit" }).formatToParts(new Date());
+      y = Number(p.find((x) => x.type === "year").value);
+      m = Number(p.find((x) => x.type === "month").value);
+    }
+    const t = y * 12 + (m - 1) + desloc;
+    return `${Math.floor(t / 12)}-${String((t % 12) + 1).padStart(2, "0")}-01`;
+  }
+  function nomeMes(iso, comAno) {
+    const [y, m] = iso.split("-").map(Number);
+    const s = new Date(Date.UTC(y, m - 1, 15)).toLocaleDateString("pt-BR", { month: "long", year: comAno ? "numeric" : undefined, timeZone: "UTC" });
+    return s;
+  }
+  const numero = (n) => Number(n || 0).toLocaleString("pt-BR");
+  const moeda = (n) => Number(n || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+  function ligaPara(ligas, qtd) {
+    const ord = [...ligas].sort((a, b) => a.min_diamantes - b.min_diamantes);
+    let atual = ord[0];
+    for (const l of ord) if ((qtd || 0) >= l.min_diamantes) atual = l;
+    return atual;
+  }
+  function faixa(ligas, liga) {
+    const ord = [...ligas].sort((a, b) => a.min_diamantes - b.min_diamantes);
+    const prox = ord[ord.indexOf(liga) + 1];
+    return prox ? `${numero(liga.min_diamantes)} – ${numero(prox.min_diamantes - 1)}` : `${numero(liga.min_diamantes)}+`;
+  }
+
+  // Situação no mês M: compara a liga de M (diamantes de M-1) com a de M-1 (diamantes de M-2)
+  function situacao(ligas, qtdAnterior, qtdRetrasado, semPremio) {
+    const ord = [...ligas].sort((a, b) => a.min_diamantes - b.min_diamantes);
+    const liga = ligaPara(ligas, qtdAnterior), antes = ligaPara(ligas, qtdRetrasado);
+    const i = ord.indexOf(liga), j = ord.indexOf(antes);
+    const tipo = i > j ? "avancou" : i === j ? "manteve" : "caiu";
+    let premio = tipo === "avancou" ? Number(liga.valor_avancou) : tipo === "manteve" ? Number(liga.valor_manteve) : 0;
+    if (semPremio) premio = 0;
+    return { liga, antes, tipo, premio };
+  }
+
+  // Selos das ligas (desenhados em SVG, no tema pato)
+  function seloLiga(liga, tam = 40) {
+    const c = liga?.cor || "#5E22A6";
+    const tipo = liga?.icone || "pato";
+    const branco = "#FFFDF7", bico = "#F29A2E", olho = "#1D0C30", amarelo = "#FFE27A";
+    const ovo = `<path d="M24 9.5c-6.3 0-10.8 9.6-10.8 17 0 6.4 4.8 11.4 10.8 11.4s10.8-5 10.8-11.4c0-7.4-4.5-17-10.8-17Z" fill="${branco}"/><path d="M19 17.5c1-2.6 2.6-4.6 4.1-5" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>`;
+    const chocando = `<circle cx="24" cy="20.5" r="6.4" fill="${amarelo}"/><path d="M17.6 21.2l-4.6 1.4 4.6 1.5z" fill="${bico}"/><circle cx="22" cy="19.2" r="1.25" fill="${olho}"/><path d="M13.2 26.3l3.6-3 3.6 3 3.6-3 3.6 3 3.6-3 3.6 3v.4c0 6.3-4.8 11.2-10.8 11.2s-10.8-4.9-10.8-11.2Z" fill="${branco}"/>`;
+    const patinho = `<ellipse cx="26.5" cy="30" rx="10.5" ry="7.2" fill="${amarelo}"/><circle cx="19.5" cy="20" r="6.6" fill="${amarelo}"/><path d="M13.4 20.3l-5.2 1.6 5.2 1.7z" fill="${bico}"/><circle cx="18.2" cy="18.6" r="1.3" fill="${olho}"/><path d="M24.5 29.5c3 .2 5.8-1 7.4-3" stroke="#E6B93C" stroke-width="2" stroke-linecap="round" fill="none"/><path d="M36 27.5l3.4-2.4-.4 4.6z" fill="${amarelo}"/>`;
+    const pato = `<ellipse cx="27" cy="30.5" rx="12" ry="7.4" fill="${branco}"/><ellipse cx="19.6" cy="24" rx="4.4" ry="7" fill="${branco}"/><circle cx="19" cy="16.6" r="6" fill="${branco}"/><path d="M13.4 16.6l-5.6 1.7 5.6 1.9z" fill="${bico}"/><circle cx="17.8" cy="15.2" r="1.3" fill="${olho}"/><path d="M25 30c3.4.4 7-1 9-3.6" stroke="${c}" stroke-opacity=".35" stroke-width="2.2" stroke-linecap="round" fill="none"/><path d="M38.2 27.6l4.4-3.8-.7 6.6z" fill="${branco}"/>`;
+    const coroa = `<path d="M13.6 10.6l2.2 3.6 3.2-3.4 3.2 3.4 2.2-3.6v5.6H13.6z" fill="#FFD54A" stroke="#C9921A" stroke-width=".8" stroke-linejoin="round"/>`;
+    const brilho = `<path d="M37 9l1 2.6 2.6 1-2.6 1-1 2.6-1-2.6-2.6-1 2.6-1z" fill="#FFE9A8"/><path d="M8.5 31l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7z" fill="#FFE9A8"/>`;
+    const desenho = { ovo, chocando, patinho, pato, rei: pato + coroa, lenda: pato + coroa + brilho }[tipo] || pato;
+    const anel = ["rei", "lenda"].includes(tipo) ? `<circle cx="24" cy="24" r="22.2" fill="none" stroke="#FFD54A" stroke-width="1.6"/>` : "";
+    return `<svg class="selo" width="${tam}" height="${tam}" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="23" fill="${c}"/><circle cx="24" cy="24" r="23" fill="url(#seloLuz)"/>${anel}${desenho}<defs><radialGradient id="seloLuz" cx=".3" cy=".25" r=".9"><stop offset="0" stop-color="#fff" stop-opacity=".35"/><stop offset=".6" stop-color="#fff" stop-opacity="0"/></radialGradient></defs></svg>`;
+  }
+
+  window.PATOX = { sb, ICONES, WHATSAPP, SUPABASE_URL, SUPABASE_KEY, loginParaEmail, esc, tempo, duracaoTexto, iniciais, toast, exigirLogin, montarMenu,
+    mesISO, nomeMes, numero, moeda, ligaPara, faixa, situacao, seloLiga };
 })();

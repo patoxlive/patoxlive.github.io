@@ -23,6 +23,7 @@
         <span class="area-brand__sub">Painel da equipe</span>
       </a>
       <span class="area-top__spacer"></span>
+      <a class="area-top__link" href="ranking.html">Ver ranking</a>
       <a class="area-top__link" href="curso.html">Ver as aulas</a>
       <div data-user-menu></div>
     </div>
@@ -37,6 +38,7 @@
     <div class="tabs" role="tablist" aria-label="Seções">
       <button type="button" role="tab" aria-selected="true" aria-controls="tab-streamers" id="t-streamers">Streamers</button>
       <button type="button" role="tab" aria-selected="false" aria-controls="tab-aulas" id="t-aulas">Aulas</button>
+      <button type="button" role="tab" aria-selected="false" aria-controls="tab-ranking" id="t-ranking">Ranking</button>
     </div>
 
     <!-- STREAMERS -->
@@ -90,6 +92,40 @@
       <div class="alert alert--info">Os vídeos ficam guardados em um espaço privado: só quem faz login consegue assistir, e cada aula só libera depois que a anterior é concluída. Limite de 50 MB por vídeo.</div>
       <div id="lista-modulos"></div>
       <div><button class="btn btn--outline" type="button" id="novo-modulo">+ Novo módulo</button></div>
+    </section>
+    <!-- RANKING -->
+    <section id="tab-ranking" role="tabpanel" aria-labelledby="t-ranking" hidden style="display:grid;gap:1.5rem">
+      <div class="card">
+        <div class="card__head">
+          <div>
+            <h2>Lançar diamantes</h2>
+            <span class="muted">Os diamantes de um mês definem a liga e a premiação do mês seguinte.</span>
+          </div>
+          <div class="field" style="min-width:200px">
+            <label for="r-mes">Mês dos diamantes</label>
+            <input class="input" type="month" id="r-mes">
+          </div>
+        </div>
+        <div id="r-lista"><div class="card__body muted">Carregando…</div></div>
+        <div class="card__body" style="display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;border-top:1px solid var(--lilac-100)">
+          <button class="btn btn--primary" type="button" id="r-salvar">Salvar diamantes</button>
+          <span class="muted" id="r-status"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><div><h2>Ligas e premiações</h2><span class="muted">Ajuste os nomes, as faixas de diamantes e os valores.</span></div></div>
+        <div style="overflow-x:auto"><table class="tabela ligas-edit" id="l-tabela"></table></div>
+        <div class="card__body" style="border-top:1px solid var(--lilac-100)"><button class="btn btn--primary" type="button" id="l-salvar">Salvar ligas</button></div>
+      </div>
+
+      <div class="card">
+        <div class="card__head"><h2>Aviso importante</h2></div>
+        <div class="card__body" style="display:grid;gap:1rem">
+          <textarea class="textarea" id="cfg-aviso" rows="3" placeholder="Deixe em branco para não mostrar aviso."></textarea>
+          <div><button class="btn btn--primary" type="button" id="cfg-salvar">Salvar aviso</button></div>
+        </div>
+      </div>
     </section>
   </main>
 

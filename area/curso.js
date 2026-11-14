@@ -46,6 +46,27 @@
 
   const primeiroNome = esc(perfil.nome.split(" ")[0]);
 
+  // Selo da liga ao lado do "Olá" (leva para Ligas & Ranking)
+  async function mostrarLiga() {
+    if (isAdmin) return;
+    const { mesISO, situacao, seloLiga, nomeMes } = window.PATOX;
+    const M1 = mesISO(-1), M2 = mesISO(-2);
+    const [l, d] = await Promise.all([
+      sb.from("ligas").select("*"),
+      sb.from("diamantes").select("mes, quantidade, sem_premio").eq("user_id", perfil.id).in("mes", [M1, M2]),
+    ]);
+    if (l.error || !l.data?.length) return;
+    const q = (m) => (d.data || []).find((r) => r.mes === m);
+    const sit = situacao(l.data, q(M1)?.quantidade, q(M2)?.quantidade, q(M1)?.sem_premio);
+    const alvo = app.querySelector(".boas-vindas");
+    if (!alvo) return;
+    const a = document.createElement("a");
+    a.className = "liga-chip";
+    a.href = "ranking.html";
+    a.innerHTML = `${seloLiga(sit.liga, 36)}<span><small>Sua liga em ${nomeMes(mesISO(0))}</small>${esc(sit.liga.nome)} →</span>`;
+    alvo.appendChild(a);
+  }
+
   if (!aulas.length) {
     app.innerHTML = `
       <div class="curso">
@@ -57,6 +78,7 @@
           ${isAdmin ? '<a class="btn btn--primary" href="admin.html">Adicionar aulas no painel</a>' : ""}
         </div>
       </div>`;
+    mostrarLiga();
     return;
   }
 
@@ -111,6 +133,7 @@
       </aside>
     </div>`;
 
+  mostrarLiga();
   const $ = (s) => app.querySelector(s);
   const player = $("#player"), video = $("#video");
   const ui = {
